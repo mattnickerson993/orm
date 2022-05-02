@@ -15,15 +15,37 @@ class Database:
         try:
             cur = self.conn.cursor()
             res = cur.execute(model._create_sql())
-            print('res', res)
+            self.conn.commit()
         except Exception as e:
-            print(e)
+            print('execption raised', e)
+        
+    def save(self, instance):
+        try:
+            cur = self.conn.cursor()
+            sql, vals = instance._get_insert_sql()
+            print('sql', sql, 'vals', vals)
+            res = cur.execute(sql, vals)
+            print('res', res)
+            self.conn.commit()
+        except Exception as e:
+            print('execption raised', e)
 
 
-class Model():
-    def __init__(self):
-        pass
+
+class Model:
+    def __init__(self, **kwargs):
+        self._data = {
+            'id': None
+        }
+        for key, value in kwargs.items():
+            self._data['key'] = value
     
+    def __getattribute__(self, key):
+        _data = super().__getattribute__("_data")
+        if key in _data:
+            return _data[key]
+        return super().__getattribute__(key)
+
     @classmethod
     def _create_sql(cls):
         CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS {table_name}s_{table_name} ({columns});"
@@ -35,8 +57,27 @@ class Model():
         final_sql = CREATE_TABLE_SQL.format(
             table_name=table_name, 
             columns=", ".join(columns))
+        
         return final_sql
-    
+
+
+    def _get_insert_sql(self):
+        INSERT_SQL = "INSERT INTO {table_name}s_{table_name} ({column_names}) VALUES ({placeholders}) RETURNING id;"
+        cls = self.__class__
+        cols = []
+        values = []
+        placeholders = []
+        for name, column_type in inspect.getmembers(cls):
+            if isinstance(column_type, Column):
+                cols.append(name)
+                print('getattr', name , getattr(self, name))
+                values.append(getattr(self, name))
+                placeholders.append('?')
+        cols = ", ".join(cols)
+        placeholders = ", ".join(placeholders)
+        sql = INSERT_SQL.format(table_name=cls.__name__.lower(), column_names=cols, placeholders=placeholders)
+        return sql, values
+
     @property
     def tables(self):
         SELECT_TABLES_SQL = """
@@ -46,9 +87,9 @@ class Model():
         return [x[0] for x in self.conn.execute(SELECT_TABLES_SQL).fetchall()]
 
 
-class Column():
+class Column:
     def __init__(self, column_type):
-        self.column_type = column_type
+        self.type = column_type
     
     @property
     def sql_type(self):
@@ -59,7 +100,7 @@ class Column():
             bytes: "BLOB",
             bool: "INTEGER"
         }
-        return SQL_TYPE_MAPPER[self.column_type]
+        return SQL_TYPE_MAPPER[self.type]
 
 
 class Message(Model):

@@ -14,5 +14,13 @@ def test_create_table(db):
     db.create_table(Message)
     assert Message._create_sql() == "CREATE TABLE IF NOT EXISTS messages_message (id SERIAL PRIMARY KEY, content VARCHAR);"
 
-    # for table in ("author", "book"):
-    #     assert table in db.tables
+
+def test_create_message_instance(db, Message):
+    msg = Message(content='test message creation')
+    print('content', msg.content)
+    db.save(msg)
+    # assert msg._get_insert_sql() == (
+    #     "INSERT INTO messages_message (content) VALUES (?) RETURNING id;",
+    #     ['test message creation']
+    # )
+    assert msg.id == 1
