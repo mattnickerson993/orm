@@ -11,6 +11,10 @@ class Database:
             host=kwargs.get('DB_HOST')
         )
     
+    def all(self, model):
+        cur = self.conn.cursor()
+        res = cur.execute(model._get_select_all_sql()).fetchall()
+
     def create_table(self, model):
         cur = self.conn.cursor()
         res = cur.execute(model._create_sql())
@@ -69,6 +73,19 @@ class Model:
         placeholders = ", ".join(placeholders)
         sql = INSERT_SQL.format(table_name=cls.__name__.lower(), column_names=cols, placeholders=placeholders)
         return sql, values
+
+    @classmethod
+    def _get_select_all_sql(cls):
+        SELECT_ALL_SQL = "SELECT {columns} FROM {table_name}s{table_name}"
+        table_name = cls.__name__
+        cols = ['id']
+        for name, column_type in inspect.getmembers(cls):
+            if isinstance(column_type, Column):
+                cols.append(name)
+        
+        sql = SELECT_ALL_SQL.format(columns=cols, table_name=table_name)
+        return sql, cols
+
 
     @property
     def tables(self):

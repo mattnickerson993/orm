@@ -23,3 +23,17 @@ def test_create_table(db, Message):
 #         ['test message creation']
 #     )
 #     assert msg.id == 1
+
+
+def test_select_all_msgs(db, Message):
+    msg_one = Message(content='first message')
+    msg_two = Message(content='second message')
+
+    msgs = db.all(Message)
+
+    assert Message._get_select_all_sql() == (
+        'SELECT id, content FROM messages_message;'
+        ['id', 'content']
+    )
+
+    assert len(msgs) == 2
