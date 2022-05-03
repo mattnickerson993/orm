@@ -13,7 +13,15 @@ class Database:
     
     def all(self, model):
         cur = self.conn.cursor()
-        res = cur.execute(model._get_select_all_sql()).fetchall()
+        sql, cols = model._get_select_all_sql()
+        cur.execute(sql)
+        res = []
+        for row in cur.fetchall():
+            instance = model()
+            for field, value in zip(cols, row):
+                setattr(instance, field, value)
+            res.append(instance)          
+        return res
 
     def create_table(self, model):
         cur = self.conn.cursor()
@@ -76,14 +84,14 @@ class Model:
 
     @classmethod
     def _get_select_all_sql(cls):
-        SELECT_ALL_SQL = "SELECT {columns} FROM {table_name}s{table_name}"
-        table_name = cls.__name__
+        SELECT_ALL_SQL = "SELECT {columns} FROM {table_name}s_{table_name};"
+        table_name = cls.__name__.lower()
         cols = ['id']
         for name, column_type in inspect.getmembers(cls):
             if isinstance(column_type, Column):
                 cols.append(name)
         
-        sql = SELECT_ALL_SQL.format(columns=cols, table_name=table_name)
+        sql = SELECT_ALL_SQL.format(columns=", ".join(cols), table_name=table_name)
         return sql, cols
 
 

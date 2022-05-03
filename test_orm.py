@@ -28,12 +28,16 @@ def test_create_table(db, Message):
 def test_select_all_msgs(db, Message):
     msg_one = Message(content='first message')
     msg_two = Message(content='second message')
+    db.save(msg_one)
+    db.save(msg_two)
 
     msgs = db.all(Message)
+    sql, cols = Message._get_select_all_sql()
 
-    assert Message._get_select_all_sql() == (
-        'SELECT id, content FROM messages_message;'
-        ['id', 'content']
-    )
+    assert sql == 'SELECT id, content FROM messages_message;'
+    assert cols == ['id', 'content']    
 
     assert len(msgs) == 2
+
+    assert type(msgs[0]) == Message
+    assert {msg.content for msg in msgs} == {'first message', 'second message'}
