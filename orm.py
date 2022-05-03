@@ -12,33 +12,26 @@ class Database:
         )
     
     def create_table(self, model):
-        try:
-            cur = self.conn.cursor()
-            res = cur.execute(model._create_sql())
-            self.conn.commit()
-        except Exception as e:
-            print('execption raised', e)
+        cur = self.conn.cursor()
+        res = cur.execute(model._create_sql())
+        self.conn.commit()
         
     def save(self, instance):
-        try:
-            cur = self.conn.cursor()
-            sql, vals = instance._get_insert_sql()
-            print('sql', sql, 'vals', vals)
-            res = cur.execute(sql, vals)
-            print('res', res)
-            self.conn.commit()
-        except Exception as e:
-            print('execption raised', e)
-
+        cur = self.conn.cursor()
+        sql, vals = instance._get_insert_sql()
+        cur.execute(sql, vals)
+        res = cur.fetchone()
+        instance._data['id'] = res[0]
+        self.conn.commit()
 
 
 class Model:
     def __init__(self, **kwargs):
         self._data = {
-            'id': None
+            "id": None
         }
         for key, value in kwargs.items():
-            self._data['key'] = value
+            self._data[key] = value
     
     def __getattribute__(self, key):
         _data = super().__getattribute__("_data")
@@ -70,9 +63,8 @@ class Model:
         for name, column_type in inspect.getmembers(cls):
             if isinstance(column_type, Column):
                 cols.append(name)
-                print('getattr', name , getattr(self, name))
                 values.append(getattr(self, name))
-                placeholders.append('?')
+                placeholders.append('%s')
         cols = ", ".join(cols)
         placeholders = ", ".join(placeholders)
         sql = INSERT_SQL.format(table_name=cls.__name__.lower(), column_names=cols, placeholders=placeholders)
