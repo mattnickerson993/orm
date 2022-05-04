@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import inspect
 import psycopg2
 
@@ -27,6 +28,9 @@ class Database:
         cur = self.conn.cursor()
         res = cur.execute(model._create_sql())
         self.conn.commit()
+
+    def get(self, model, **kwargs):
+        sql, params = model._get_single_row_sql(**kwargs)
         
     def save(self, instance):
         cur = self.conn.cursor()
@@ -93,6 +97,20 @@ class Model:
         
         sql = SELECT_ALL_SQL.format(columns=", ".join(cols), table_name=table_name)
         return sql, cols
+
+    @classmethod
+    def _get_single_row_sql(cls, **kwargs):
+        INITIAL_SQL = """
+        SELECT * FROM {table_name}s_{table_name}
+        WHERE {criteria};
+        """ 
+        table_name = cls.__name__.lower()
+        cols = OrderedDict(**kwargs)
+        criteria = [name for name, val in cols.items()]
+        values = [val for name, val in cols.items()]
+        FINAL_SQL = INITIAL_SQL.format(table_name=table_name, criteria=f"{'=%s AND '.join(criteria)}=%s")
+        
+        return FINAL_SQL, values
 
 
     @property

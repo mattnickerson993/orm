@@ -41,3 +41,17 @@ def test_select_all_msgs(db, Message):
 
     assert type(msgs[0]) == Message
     assert {msg.content for msg in msgs} == {'first message', 'second message'}
+
+
+def test_get_msg(db, Message):
+    msg = Message(content='individual message')
+    db.save(msg)
+
+    msg_from_db = db.get(Message, id=1)
+
+    same_msg_from_db = db.get(Message, contnet='individual message')
+
+    assert type(msg_from_db) == Message
+    assert msg_from_db.id == 1
+    assert same_msg_from_db.id == 1
+    assert same_msg_from_db.content == 'individual message'
