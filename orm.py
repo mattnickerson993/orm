@@ -2,6 +2,8 @@ from collections import OrderedDict
 import inspect
 import psycopg2
 
+from exceptions import ModelNotFound, MultipleObjectsReturned
+
 
 class Database:
     def __init__(self, **kwargs):
@@ -30,7 +32,23 @@ class Database:
         self.conn.commit()
 
     def get(self, model, **kwargs):
-        sql, params = model._get_single_row_sql(**kwargs)
+        sql, fields, params = model._get_single_row_sql(**kwargs)
+        cur = self.conn.cursor()
+        cur.execute(sql, params)
+        res = cur.fetchall()
+        num_rows = len(res)
+
+        if num_rows > 1:
+            raise MultipleObjectsReturned(f"Call to model manager expected 1 object, call returned {num_rows}!")
+        elif not num_rows:
+            raise ModelNotFound('No objects returned from query')
+        
+        instance = model()
+        for field, val in zip(fields, res[0]):
+            setattr(instance, field, val)
+        return instance
+        
+
         
     def save(self, instance):
         cur = self.conn.cursor()
@@ -54,6 +72,11 @@ class Model:
         if key in _data:
             return _data[key]
         return super().__getattribute__(key)
+    
+    def __setattr__(self, name, value):
+        super().__setattr__(name, value)
+        if name in self._data:
+            self._data[name] = value
 
     @classmethod
     def _create_sql(cls):
@@ -106,11 +129,12 @@ class Model:
         """ 
         table_name = cls.__name__.lower()
         cols = OrderedDict(**kwargs)
-        criteria = [name for name, val in cols.items()]
-        values = [val for name, val in cols.items()]
+        criteria = [name for name in cols.keys()]
+        values = [val for  val in cols.values()]
         FINAL_SQL = INITIAL_SQL.format(table_name=table_name, criteria=f"{'=%s AND '.join(criteria)}=%s")
-        
-        return FINAL_SQL, values
+        if 'id' not in criteria:
+            criteria.insert(0, 'id')
+        return FINAL_SQL, criteria, values
 
 
     @property
@@ -140,3 +164,6 @@ class Column:
 
 class Message(Model):
     content = Column(str)
+
+    def __str__(self):
+        return f"{self.content}"
