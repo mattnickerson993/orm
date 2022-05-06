@@ -47,7 +47,7 @@ class Database:
         for field, val in zip(fields, res[0]):
             setattr(instance, field, val)
         return instance
-        
+    
 
         
     def save(self, instance):
@@ -57,6 +57,12 @@ class Database:
         res = cur.fetchone()
         instance._data['id'] = res[0]
         self.conn.commit()
+
+
+    def update(self, instance):
+        cur = self.conn.cursor()
+        sql, vals = instance._get_update_sql()
+        cur.execute(sql, vals)
 
 
 class Model:
@@ -124,17 +130,28 @@ class Model:
     @classmethod
     def _get_single_row_sql(cls, **kwargs):
         INITIAL_SQL = """
-        SELECT * FROM {table_name}s_{table_name}
+        SELECT {fields} FROM {table_name}s_{table_name}
         WHERE {criteria};
         """ 
         table_name = cls.__name__.lower()
+
+        # get all cls attributes only
+        fields = [i[0] for i in inspect.getmembers(cls) 
+                       if not i[0].startswith('_')
+                       if not inspect.ismethod(i[1]) and not isinstance(i[1], property)]
+                    
+        if 'id' not in fields:
+            fields.insert(0, 'id')
         cols = OrderedDict(**kwargs)
         criteria = [name for name in cols.keys()]
         values = [val for  val in cols.values()]
-        FINAL_SQL = INITIAL_SQL.format(table_name=table_name, criteria=f"{'=%s AND '.join(criteria)}=%s")
-        if 'id' not in criteria:
-            criteria.insert(0, 'id')
-        return FINAL_SQL, criteria, values
+        FINAL_SQL = INITIAL_SQL.format(
+            fields = ", ".join(fields),
+            table_name=table_name,
+            criteria=f"{'=%s AND '.join(criteria)}=%s"
+        )
+    
+        return FINAL_SQL, fields, values
 
 
     @property
@@ -144,6 +161,15 @@ class Model:
         WHERE table_type='BASE TABLE' AND table_schema='public';
         """
         return [x[0] for x in self.conn.execute(SELECT_TABLES_SQL).fetchall()]
+
+    
+    def _get_update_sql(self):
+        UPDATE_SQL = "UPDATE {table_name}s_{table_name} SET {fields}"
+        cls = self.__class__.lower()
+        cols = []
+        values = []
+        placeholders = []
+        return
 
 
 class Column:
