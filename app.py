@@ -10,6 +10,8 @@ if __name__ == "__main__":
     # msg = Message(content='individual message')
     # db.save(msg)
 
+    # get
+
     # msg_from_db = db.get(Message, id=2, content='individual message')
     # msgs = db.all(Message)
     # for msg in msgs:
@@ -23,7 +25,19 @@ if __name__ == "__main__":
 
 
     # update
-    msg_from_db = db.get(Message, id=2, content='individual message')
-    msg_from_db.content = 'modified content'
-    db.update(msg_from_db)
+    # msg_from_db = db.get(Message, id=2, content='modified content')
+    # sql, params = msg_from_db._get_update_sql()
+    # msg_from_db.content = 'modified content again'
+    # db.update(msg_from_db)
+
+    # mod_msg = db.get(Message, id=2)
+    # print(mod_msg.id)
+    # print(mod_msg.content)
     
+
+    # delete
+
+    msg = db.get(Message, id=2)
+    sql, params = msg._get_delete_sql()
+    db.delete(msg)
+    # msg = db.get(Message, id=2)

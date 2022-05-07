@@ -31,6 +31,14 @@ class Database:
         res = cur.execute(model._create_sql())
         self.conn.commit()
 
+    
+    def delete(self, model):
+        cur = self.conn.cursor()
+        sql, params = model._get_delete_sql()
+        res = cur.execute(sql, params)
+        self.conn.commit()
+
+
     def get(self, model, **kwargs):
         sql, fields, params = model._get_single_row_sql(**kwargs)
         cur = self.conn.cursor()
@@ -63,6 +71,7 @@ class Database:
         cur = self.conn.cursor()
         sql, vals = instance._get_update_sql()
         cur.execute(sql, vals)
+        self.conn.commit()
 
 
 class Model:
@@ -84,6 +93,7 @@ class Model:
         if name in self._data:
             self._data[name] = value
 
+
     @classmethod
     def _create_sql(cls):
         CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS {table_name}s_{table_name} ({columns});"
@@ -97,6 +107,13 @@ class Model:
             columns=", ".join(columns))
         
         return final_sql
+    
+    def _get_delete_sql(self):
+        DELETE_SQL = "DELETE from {table_name}s_{table_name} WHERE id = %s"
+        cls = self.__class__
+        values = [getattr(self, 'id')]
+        FINAL_SQL = DELETE_SQL.format(table_name=cls.__name__.lower())
+        return FINAL_SQL, values
 
 
     def _get_insert_sql(self):
@@ -164,12 +181,23 @@ class Model:
 
     
     def _get_update_sql(self):
-        UPDATE_SQL = "UPDATE {table_name}s_{table_name} SET {fields}"
-        cls = self.__class__.lower()
+        UPDATE_SQL = "UPDATE {table_name}s_{table_name} SET {fields} WHERE id = %s"
+        cls = self.__class__
         cols = []
         values = []
-        placeholders = []
-        return
+        for name, column_type in inspect.getmembers(cls):
+            if isinstance(column_type, Column):
+                cols.append(name)
+                values.append(getattr(self, name))
+        
+        values.append(getattr(self, 'id'))
+
+        FINAL_SQL = UPDATE_SQL.format(
+            table_name=cls.__name__.lower(),
+            fields=", ".join([f"{col} = %s" for col in cols])
+            )
+
+        return FINAL_SQL, values
 
 
 class Column:
