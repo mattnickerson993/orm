@@ -105,6 +105,10 @@ class BaseManager:
         return cls
     
     @classmethod
+    def _commit(cls):
+        cls.connection.commit()
+
+    @classmethod
     def _get_cursor(cls):
         return cls.connection.cursor()
 
@@ -129,6 +133,34 @@ class BaseManager:
                 setattr(instance, field, value)
             res.append(instance)          
         return res
+    
+
+    def get(self, **kwargs):
+        cursor = self._get_cursor()
+        sql, fields, params = self.model._get_single_row_sql(**kwargs)
+        cursor.execute(sql, params)
+        res = cursor.fetchall()
+        num_rows = len(res)
+
+        if num_rows > 1:
+            raise MultipleObjectsReturned(f"Call to model manager expected 1 object, call returned {num_rows}!")
+        elif not num_rows:
+            raise ModelNotFound('No objects returned from query')
+        
+        instance = self.model()
+        for field, val in zip(fields, res[0]):
+            setattr(instance, field, val)
+        return instance
+
+    def save(self, instance):
+        cursor = self._get_cursor()
+        sql, vals = instance._get_insert_sql()
+        cursor.execute(sql, vals)
+        res = cursor.fetchone()
+        instance._state['id'] = res[0]
+        self._commit()
+        return instance
+
 
 
 class MetaModel(type):
@@ -143,7 +175,7 @@ class MetaModel(type):
 
 
 class Model(metaclass=MetaModel):
-    table_name = ""
+    _table_name = ""
 
     def __init__(self, **kwargs):
         self._state = {
@@ -162,6 +194,22 @@ class Model(metaclass=MetaModel):
         super().__setattr__(name, value)
         if name in self._state:
             self._state[name] = value
+
+    def _get_insert_sql(self):
+        INSERT_SQL = "INSERT INTO {table_name}s_{table_name} ({column_names}) VALUES ({placeholders}) RETURNING id;"
+        cls = self.__class__
+        cols = []
+        values = []
+        placeholders = []
+        for name, column_type in inspect.getmembers(cls):
+            if isinstance(column_type, Column):
+                cols.append(name)
+                values.append(getattr(self, name))
+                placeholders.append('%s')
+        cols = ", ".join(cols)
+        placeholders = ", ".join(placeholders)
+        sql = INSERT_SQL.format(table_name=cls.__name__.lower(), column_names=cols, placeholders=placeholders)
+        return sql, values
     
     @classmethod
     def _get_select_all_sql(cls):
@@ -176,9 +224,34 @@ class Model(metaclass=MetaModel):
         return sql, cols
 
 
+    @classmethod
+    def _get_single_row_sql(cls, **kwargs):
+        INITIAL_SQL = """
+        SELECT {fields} FROM {table_name}s_{table_name}
+        WHERE {criteria};
+        """ 
+        table_name = cls.__name__.lower()
+        # get all cls attributes only
+        fields = [i[0] for i in inspect.getmembers(cls) 
+                       if not i[0].startswith('_')
+                       if not inspect.ismethod(i[1]) and not isinstance(i[1], property)]
+                    
+        if 'id' not in fields:
+            fields.insert(0, 'id')
+        cols = OrderedDict(**kwargs)
+        criteria = [name for name in cols.keys()]
+        values = [val for  val in cols.values()]
+        FINAL_SQL = INITIAL_SQL.format(
+            fields = ", ".join(fields),
+            table_name=table_name,
+            criteria=f"{'=%s AND '.join(criteria)}=%s"
+        )
+    
+        return FINAL_SQL, fields, values
+
 class Message(Model):
 
-    table_name = 'message'
+    _table_name = 'message'
         
     content = Column(str)
 
@@ -189,7 +262,24 @@ class Message(Model):
 
 
 if __name__ == "__main__":
+    print(Message.objects)
     msgs = Message.objects.all()
     for msg in msgs:
         print(msg.id)
         print(msg.content)
+
+    # msg = Message.objects.get(content='individual message')
+    # print(msg)
+    # print(msg.id)
+    # print(msg.content)
+
+    # msg = Message.objects.get(id=4)
+    # print(msg)
+    # print(msg.id)
+    # print(msg.content)
+
+    # my_msg = Message(content='newest content')
+    # msg = Message.objects.save(my_msg)
+    # print(msg)
+    # print(msg.id)
+    # print(msg.content)
