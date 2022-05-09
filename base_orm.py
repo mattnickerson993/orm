@@ -52,6 +52,12 @@ class BaseManager:
             res.append(instance)          
         return res
     
+    def delete(self, instance):
+        cursor = self._get_cursor()
+        sql, params = instance._get_delete_sql()
+        print(sql)
+        cursor.execute(sql, params)
+        self._commit()
 
     def get(self, **kwargs):
         cursor = self._get_cursor()
@@ -131,6 +137,13 @@ class Model(metaclass=MetaModel):
         super().__setattr__(name, value)
         if name in self._state:
             self._state[name] = value
+    
+    def _get_delete_sql(self):
+        DELETE_SQL = "DELETE from {table_name}s_{table_name} WHERE id = %s"
+        cls = self.__class__
+        values = [getattr(self, 'id')]
+        FINAL_SQL = DELETE_SQL.format(table_name=cls.__name__.lower())
+        return FINAL_SQL, values
 
     @classmethod
     def _get_filter_sql(cls, **kwargs):
@@ -273,11 +286,15 @@ if __name__ == "__main__":
     # print(msg.content)
 
     # update
+    # msg = Message.objects.get(id=1)
+    # print(msg)
+    # print(msg.id)
+    # print(msg.content)
+    # msg.content = 'updated content'
+    # new_msg = Message.objects.update(msg)
+    # print(new_msg.id)
+    # print(new_msg.content)
+
+    # delete
     msg = Message.objects.get(id=1)
-    print(msg)
-    print(msg.id)
-    print(msg.content)
-    msg.content = 'updated content'
-    new_msg = Message.objects.update(msg)
-    print(new_msg.id)
-    print(new_msg.content)
+    Message.objects.delete(msg)
