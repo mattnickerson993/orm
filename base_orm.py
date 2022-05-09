@@ -160,7 +160,18 @@ class BaseManager:
         instance._state['id'] = res[0]
         self._commit()
         return instance
-
+    
+    def where(self, **kwargs):
+        cursor = self._get_cursor()
+        sql, cols, params = self.model._get_filter_sql(**kwargs)
+        cursor.execute(sql, params)
+        res = []
+        for row in cursor.fetchall():
+            instance = self.model()
+            for field, value in zip(cols, row):
+                setattr(instance, field, value)
+            res.append(instance)          
+        return res
 
 
 class MetaModel(type):
@@ -194,6 +205,32 @@ class Model(metaclass=MetaModel):
         super().__setattr__(name, value)
         if name in self._state:
             self._state[name] = value
+
+    @classmethod
+    def _get_filter_sql(cls, **kwargs):
+        INITIAL_SQL = """
+        SELECT {fields} FROM {table_name}s_{table_name}
+        WHERE {criteria};
+        """ 
+        table_name = cls.__name__.lower()
+        # get all cls attributes only
+        fields = [i[0] for i in inspect.getmembers(cls)
+                       if not i[0].startswith('_')
+                       if not inspect.ismethod(i[1]) and not isinstance(i[1], property)]
+        
+        if 'id' not in fields:
+            fields.insert(0, 'id')
+        cols = OrderedDict(**kwargs)
+        criteria = [name for name in cols.keys()]
+        values = [val for  val in cols.values()]
+        FINAL_SQL = INITIAL_SQL.format(
+            fields = ", ".join(fields),
+            table_name=table_name,
+            criteria=f"{'=%s AND '.join(criteria)}=%s"
+        )
+    
+        return FINAL_SQL, fields, values
+
 
     def _get_insert_sql(self):
         INSERT_SQL = "INSERT INTO {table_name}s_{table_name} ({column_names}) VALUES ({placeholders}) RETURNING id;"
@@ -262,11 +299,15 @@ class Message(Model):
 
 
 if __name__ == "__main__":
-    print(Message.objects)
-    msgs = Message.objects.all()
+    # print(Message.objects)
+    msgs = Message.objects.where( id=1, content='newest content')
     for msg in msgs:
         print(msg.id)
         print(msg.content)
+    # msgs = Message.objects.all()
+    # for msg in msgs:
+    #     print(msg.id)
+    #     print(msg.content)
 
     # msg = Message.objects.get(content='individual message')
     # print(msg)
@@ -278,6 +319,7 @@ if __name__ == "__main__":
     # print(msg.id)
     # print(msg.content)
 
+    # clean up later
     # my_msg = Message(content='newest content')
     # msg = Message.objects.save(my_msg)
     # print(msg)
