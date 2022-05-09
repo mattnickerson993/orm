@@ -52,6 +52,11 @@ class BaseManager:
             res.append(instance)          
         return res
     
+    def create(self, **kwargs):
+        cursor = self._get_cursor()
+        sql, params = self.model._get_create_sql(**kwargs)
+        return
+
     def delete(self, instance):
         cursor = self._get_cursor()
         sql, params = instance._get_delete_sql()
@@ -138,6 +143,28 @@ class Model(metaclass=MetaModel):
         if name in self._state:
             self._state[name] = value
     
+    @classmethod
+    def _get_create_sql(cls, **kwargs):
+        INSERT_SQL = "INSERT INTO {table_name}s_{table_name} ({column_names}) VALUES ({placeholders});"
+        table_name = cls.__name__.lower()
+        cols = []
+        values = []
+        placeholders = []
+        for name, column_type in inspect.getmembers(cls):
+            if isinstance(column_type, Column):
+                cols.append(name)
+                values.append(kwargs.get(name))
+                placeholders.append('%s')
+
+        # cols = OrderedDict(**kwargs)
+        # criteria = [name for name in cols.keys()]
+        # values = [val for  val in cols.values()]
+        cols = ", ".join(cols)
+        placeholders = ", ".join(placeholders)
+        sql = INSERT_SQL.format(table_name=table_name, column_names=cols, placeholders=placeholders)
+        print(sql)
+        return sql, values
+
     def _get_delete_sql(self):
         DELETE_SQL = "DELETE from {table_name}s_{table_name} WHERE id = %s"
         cls = self.__class__
@@ -296,5 +323,10 @@ if __name__ == "__main__":
     # print(new_msg.content)
 
     # delete
-    msg = Message.objects.get(id=1)
-    Message.objects.delete(msg)
+    # msg = Message.objects.get(id=1)
+    # Message.objects.delete(msg)
+
+    # create
+    Message.objects.create(
+        content = 'newly created content'
+    )
