@@ -54,13 +54,17 @@ class BaseManager:
     
     def create(self, **kwargs):
         cursor = self._get_cursor()
-        sql, params = self.model._get_create_sql(**kwargs)
-        return
+        sql, fields, params = self.model._get_create_sql(**kwargs)
+        cursor.execute(sql, params)
+        res = cursor.fetchone()
+        new_id = res[0]
+        self._commit()
+        
+        return self.get(id=new_id)
 
     def delete(self, instance):
         cursor = self._get_cursor()
         sql, params = instance._get_delete_sql()
-        print(sql)
         cursor.execute(sql, params)
         self._commit()
 
@@ -145,7 +149,7 @@ class Model(metaclass=MetaModel):
     
     @classmethod
     def _get_create_sql(cls, **kwargs):
-        INSERT_SQL = "INSERT INTO {table_name}s_{table_name} ({column_names}) VALUES ({placeholders});"
+        INSERT_SQL = "INSERT INTO {table_name}s_{table_name} ({column_names}) VALUES ({placeholders}) RETURNING id;"
         table_name = cls.__name__.lower()
         cols = []
         values = []
@@ -162,8 +166,7 @@ class Model(metaclass=MetaModel):
         cols = ", ".join(cols)
         placeholders = ", ".join(placeholders)
         sql = INSERT_SQL.format(table_name=table_name, column_names=cols, placeholders=placeholders)
-        print(sql)
-        return sql, values
+        return sql, cols, values
 
     def _get_delete_sql(self):
         DELETE_SQL = "DELETE from {table_name}s_{table_name} WHERE id = %s"
@@ -327,6 +330,9 @@ if __name__ == "__main__":
     # Message.objects.delete(msg)
 
     # create
-    Message.objects.create(
-        content = 'newly created content'
-    )
+    # msg = Message.objects.create(
+    #     content = 'newly created content againn'
+    # )
+    # print(msg)
+    # print(msg.id)
+    # print(msg.content)
