@@ -124,6 +124,10 @@ class MetaModel(type):
     @property
     def objects(cls):
         return cls._get_manager()
+    
+    @property
+    def _db(cls):
+        return cls.manager_class.connection
 
 
 class Model(metaclass=MetaModel):
@@ -274,6 +278,18 @@ class Model(metaclass=MetaModel):
             )
 
         return FINAL_SQL, values
+    
+    def save(self):
+        # challenge = how to handle db
+        # need to handle update vs insert
+        cls = type(self)
+        db = cls._db
+        cursor = db.cursor()
+        sql, vals = self._get_update_sql()
+        cursor.execute(sql, vals)
+        db.commit()
+    
+        return self
 
 class Message(Model):
 
@@ -336,3 +352,7 @@ if __name__ == "__main__":
     # print(msg)
     # print(msg.id)
     # print(msg.content)
+
+    # goal
+    msg = Message(content='content to save')
+    msg.save()
