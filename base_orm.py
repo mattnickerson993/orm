@@ -188,7 +188,7 @@ class Model(metaclass=MetaModel):
         table_name = cls.__name__.lower()
         # get all cls attributes only
         fields = [i[0] for i in inspect.getmembers(cls)
-                       if not i[0].startswith('_')
+                       if not i[0].startswith('_') and not inspect.isfunction(i[1])
                        if not inspect.ismethod(i[1]) and not isinstance(i[1], property)]
         
         if 'id' not in fields:
@@ -243,7 +243,7 @@ class Model(metaclass=MetaModel):
         table_name = cls.__name__.lower()
         # get all cls attributes only
         fields = [i[0] for i in inspect.getmembers(cls) 
-                       if not i[0].startswith('_')
+                       if not i[0].startswith('_') and not inspect.isfunction(i[1])
                        if not inspect.ismethod(i[1]) and not isinstance(i[1], property)]
                     
         if 'id' not in fields:
@@ -279,14 +279,31 @@ class Model(metaclass=MetaModel):
 
         return FINAL_SQL, values
     
+    def delete(self):
+        try:
+            cls = type(self)
+            db = cls._db
+            cursor = db.cursor()
+            sql, params = self._get_delete_sql()
+            cursor.execute(sql, params)
+            db.commit()
+        except Exception as e:
+            return False
+    
     def save(self):
-        # challenge = how to handle db
-        # need to handle update vs insert
+        """update instance in db if it exists, otherwise create and update id in instance state"""
         cls = type(self)
         db = cls._db
         cursor = db.cursor()
-        sql, vals = self._get_update_sql()
-        cursor.execute(sql, vals)
+        id = self._state.get('id')
+        if id:
+            sql, vals = self._get_update_sql()
+            cursor.execute(sql, vals)
+        else:
+            sql, vals = self._get_insert_sql()
+            cursor.execute(sql, vals)
+            res = cursor.fetchone()
+            self._state['id'] = res[0]
         db.commit()
     
         return self
@@ -304,6 +321,8 @@ class Message(Model):
 
 
 if __name__ == "__main__":
+
+     ########## where (filter) ###############
     # print(Message.objects)
     # msgs = Message.objects.where( id=1, content='newest content')
     # for msg in msgs:
@@ -314,38 +333,19 @@ if __name__ == "__main__":
     #     print(msg.id)
     #     print(msg.content)
 
+
+     ########## get ###############
     # msg = Message.objects.get(content='individual message')
     # print(msg)
     # print(msg.id)
     # print(msg.content)
-
     # msg = Message.objects.get(id=4)
     # print(msg)
     # print(msg.id)
     # print(msg.content)
 
-    # clean up later
-    # my_msg = Message(content='newest content')
-    # msg = Message.objects.save(my_msg)
-    # print(msg)
-    # print(msg.id)
-    # print(msg.content)
 
-    # update
-    # msg = Message.objects.get(id=1)
-    # print(msg)
-    # print(msg.id)
-    # print(msg.content)
-    # msg.content = 'updated content'
-    # new_msg = Message.objects.update(msg)
-    # print(new_msg.id)
-    # print(new_msg.content)
-
-    # delete
-    # msg = Message.objects.get(id=1)
-    # Message.objects.delete(msg)
-
-    # create
+     ########## create ###############
     # msg = Message.objects.create(
     #     content = 'newly created content againn'
     # )
@@ -353,6 +353,18 @@ if __name__ == "__main__":
     # print(msg.id)
     # print(msg.content)
 
-    # goal
-    msg = Message(content='content to save')
-    msg.save()
+    ########## save (create or update) ###############
+    # msg = Message(content='content to save')
+    # msg.save()
+    # print(msg.id)
+    # print(msg.content)
+
+    # msgs = Message.objects.where(content='content to save')
+    # for msg in msgs:
+    #     msg.content = 'modified content'
+    #     msg.save()
+
+    ########## delete ###############
+    # msg = Message.objects.get(id=1)
+    # msg.delete()
+
