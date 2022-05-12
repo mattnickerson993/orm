@@ -1,9 +1,7 @@
-from this import d
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import pytest
-
-from orm import Database
+from base_orm import Job
 
 from settings import DB_SETTINGS
 
@@ -31,5 +29,10 @@ def drop_test_db():
     DELETE_DB_SQL = """DROP DATABASE test_db;"""
     cursor.execute(DELETE_DB_SQL)
 
-# create_test_db()
+
+def test_create_table(test_client_db):
+    assert 1 == 1
+
+
+
 # drop_test_db()
