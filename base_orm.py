@@ -61,6 +61,12 @@ class BaseManager:
         self._commit()
         
         return self.get(id=new_id)
+    
+    def create_table(self):
+        cursor = self._get_cursor()
+        sql = self.model._create_table_sql()
+        res = cursor.execute(sql)
+        self._commit()
 
     def delete(self, instance):
         cursor = self._get_cursor()
@@ -150,6 +156,20 @@ class Model(metaclass=MetaModel):
         super().__setattr__(name, value)
         if name in self._state:
             self._state[name] = value
+    
+    @classmethod
+    def _create_table_sql(cls):
+        CREATE_TABLE_SQL = "CREATE TABLE IF NOT EXISTS {table_name}s_{table_name} ({columns});"
+        table_name = cls.__name__.lower()
+        columns = ['id SERIAL PRIMARY KEY']
+        for name, field in inspect.getmembers(cls):
+            if isinstance(field, Column):
+                columns.append(f'{name} {field.sql_type}')
+        final_sql = CREATE_TABLE_SQL.format(
+            table_name=table_name, 
+            columns=", ".join(columns))
+        
+        return final_sql
     
     @classmethod
     def _get_create_sql(cls, **kwargs):
@@ -318,6 +338,16 @@ class Message(Model):
         return f"{self.content}"
 
 
+class Job(Model):
+
+    _table_name = 'job'
+        
+    data = Column(str)
+
+    def __str__(self):
+        return f"{self.data}"
+
+
 
 
 if __name__ == "__main__":
@@ -368,3 +398,5 @@ if __name__ == "__main__":
     # msg = Message.objects.get(id=1)
     # msg.delete()
 
+    ##############create table ################
+    Job.objects.create_table()
