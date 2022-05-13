@@ -1,38 +1,34 @@
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import pytest
-from base_orm import Job
+from base_orm import Message
+from exceptions import ModelNotFound
+# from base_orm import Job, Message
 
 from settings import DB_SETTINGS
 
-def create_test_db():
-    connection = psycopg2.connect(
-            dbname=DB_SETTINGS.get('DB_NAME'),
-            user=DB_SETTINGS.get('DB_USER'),
-            password=DB_SETTINGS.get('DB_PASS'),
-            host=DB_SETTINGS.get('DB_HOST')
-        )
-    connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-    cursor = connection.cursor()
-    CREATE_DB_SQL = """CREATE DATABASE test_db;"""
-    cursor.execute(CREATE_DB_SQL)
-
-def drop_test_db():
-    connection = psycopg2.connect(
-            dbname=DB_SETTINGS.get('DB_NAME'),
-            user=DB_SETTINGS.get('DB_USER'),
-            password=DB_SETTINGS.get('DB_PASS'),
-            host=DB_SETTINGS.get('DB_HOST')
-        )
-    connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-    cursor = connection.cursor()
-    DELETE_DB_SQL = """DROP DATABASE test_db;"""
-    cursor.execute(DELETE_DB_SQL)
-
-
-def test_create_table(test_client_db):
-    assert 1 == 1
 
 
 
-# drop_test_db()
+def test_create_models(test_client_db):
+    Job, Message = test_client_db
+    job = Job.objects.create(data='test data')
+    msg = Message.objects.create(content='test content')
+    assert job.id == 1
+    assert msg.id == 1
+    assert msg.content == 'test content'
+    assert job.data == 'test data'
+
+def test_get_models(test_client_db):
+    Job, Message = test_client_db
+    job = Job.objects.get(id = 1)
+    msg = Message.objects.get(id = 1)
+    assert job.id == 1
+    assert msg.id == 1
+    assert msg.content == 'test content'
+    assert job.data == 'test data'
+
+def test_model_not_found_exception(test_client_db):
+    Job, _ = test_client_db
+    with pytest.raises(ModelNotFound):
+        job = Job.objects.get(id=100)
