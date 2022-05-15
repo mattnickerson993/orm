@@ -1,10 +1,12 @@
 from collections import OrderedDict
 import inspect
+
 import psycopg2
 
-from settings import DB_SETTINGS
 from exceptions import ModelNotFound, MultipleObjectsReturned
-from helpers import Column
+from fields import BaseField, Column
+
+from settings import DB_SETTINGS
 
 
 class BaseManager:
@@ -163,12 +165,11 @@ class Model(metaclass=MetaModel):
         table_name = cls.__name__.lower()
         columns = ['id SERIAL PRIMARY KEY']
         for name, field in inspect.getmembers(cls):
-            if isinstance(field, Column):
-                columns.append(f'{name} {field.sql_type}')
+            if isinstance(field, BaseField):
+                columns.append(f'{name} {field.get_sql_text}')
         final_sql = CREATE_TABLE_SQL.format(
             table_name=table_name, 
             columns=", ".join(columns))
-        
         return final_sql
     
     @classmethod
@@ -179,7 +180,7 @@ class Model(metaclass=MetaModel):
         values = []
         placeholders = []
         for name, column_type in inspect.getmembers(cls):
-            if isinstance(column_type, Column):
+            if isinstance(column_type, BaseField):
                 cols.append(name)
                 values.append(kwargs.get(name))
                 placeholders.append('%s')
@@ -232,7 +233,7 @@ class Model(metaclass=MetaModel):
         values = []
         placeholders = []
         for name, column_type in inspect.getmembers(cls):
-            if isinstance(column_type, Column):
+            if isinstance(column_type, BaseField):
                 cols.append(name)
                 values.append(getattr(self, name))
                 placeholders.append('%s')
@@ -247,7 +248,7 @@ class Model(metaclass=MetaModel):
         table_name = cls.__name__.lower()
         cols = ['id']
         for name, column_type in inspect.getmembers(cls):
-            if isinstance(column_type, Column):
+            if isinstance(column_type, BaseField):
                 cols.append(name)
         
         sql = SELECT_ALL_SQL.format(columns=", ".join(cols), table_name=table_name)
@@ -286,7 +287,7 @@ class Model(metaclass=MetaModel):
         cols = []
         values = []
         for name, column_type in inspect.getmembers(cls):
-            if isinstance(column_type, Column):
+            if isinstance(column_type, BaseField):
                 cols.append(name)
                 values.append(getattr(self, name))
         
@@ -327,76 +328,3 @@ class Model(metaclass=MetaModel):
         db.commit()
     
         return self
-
-class Message(Model):
-
-    _table_name = 'message'
-        
-    content = Column(str)
-
-    def __str__(self):
-        return f"{self.content}"
-
-
-class Job(Model):
-
-    _table_name = 'job'
-        
-    data = Column(str)
-
-    def __str__(self):
-        return f"{self.data}"
-
-
-
-
-if __name__ == "__main__":
-
-     ########## where (filter) ###############
-    # print(Message.objects)
-    # msgs = Message.objects.where( id=1, content='newest content')
-    # for msg in msgs:
-    #     print(msg.id)
-    #     print(msg.content)
-    # msgs = Message.objects.all()
-    # for msg in msgs:
-    #     print(msg.id)
-    #     print(msg.content)
-
-
-     ########## get ###############
-    # msg = Message.objects.get(content='individual message')
-    # print(msg)
-    # print(msg.id)
-    # print(msg.content)
-    # msg = Message.objects.get(id=4)
-    # print(msg)
-    # print(msg.id)
-    # print(msg.content)
-
-
-     ########## create ###############
-    # msg = Message.objects.create(
-    #     content = 'newly created content againn'
-    # )
-    # print(msg)
-    # print(msg.id)
-    # print(msg.content)
-
-    ########## save (create or update) ###############
-    # msg = Message(content='content to save')
-    # msg.save()
-    # print(msg.id)
-    # print(msg.content)
-
-    # msgs = Message.objects.where(content='content to save')
-    # for msg in msgs:
-    #     msg.content = 'modified content'
-    #     msg.save()
-
-    ########## delete ###############
-    # msg = Message.objects.get(id=1)
-    # msg.delete()
-
-    ##############create table ################
-    Job.objects.create_table()

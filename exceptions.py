@@ -3,3 +3,6 @@ class MultipleObjectsReturned(Exception):
 
 class ModelNotFound(Exception):
     pass
+
+class MaxLengthRequired(Exception):
+    pass

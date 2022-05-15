@@ -1,9 +1,8 @@
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import pytest
-from base_orm import Message
 from exceptions import ModelNotFound, MultipleObjectsReturned
-# from base_orm import Job, Message
+from models import Job, Message
 
 from settings import DB_SETTINGS
 
@@ -13,7 +12,12 @@ from settings import DB_SETTINGS
 def test_create_models(test_client_db, cleanup):
     Job, Message = test_client_db
     job = Job.objects.create(data='test data')
-    msg = Message.objects.create(content='test content')
+    msg = Message.objects.create(
+        content='test content',
+        body='test body',
+        count=1,
+        tries=2
+    )
     assert job.id == 1
     assert msg.id == 1
     assert msg.content == 'test content'
@@ -22,7 +26,12 @@ def test_create_models(test_client_db, cleanup):
 def test_get_models(test_client_db, cleanup):
     Job, Message = test_client_db
     Job.objects.create(data='test data')
-    Message.objects.create(content='test content')
+    msg = Message.objects.create(
+        content='test content',
+        body='test body',
+        count=1,
+        tries=2
+    )
     job = Job.objects.get(id = 1)
     msg = Message.objects.get(id = 1)
     assert job.id == 1
@@ -55,8 +64,18 @@ def test_all(test_client_db, cleanup):
 def test_where(test_client_db, cleanup):
     Job, Message = test_client_db
     Job.objects.create(data='test data')
-    Message.objects.create(content='test content')
-    Message.objects.create(content='test content')
+    Message.objects.create(
+        content='test content',
+        body='test body',
+        count=11,
+        tries=2
+    )
+    Message.objects.create(
+        content='test content',
+        body='test body',
+        count=1,
+        tries=22
+    )
     msgs = Message.objects.where(content = 'test content')
     ids = [msg.id for msg in msgs]
     assert ids == [1, 2]
