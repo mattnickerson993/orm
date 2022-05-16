@@ -1,4 +1,4 @@
-from models import Message
+from models import Job, Message
 
 
 if __name__ == "__main__":
@@ -51,4 +51,5 @@ if __name__ == "__main__":
 
     ##############create table ################
     # Job.objects.create_table()
-    Message.objects.create_table()
+#     Message.objects.create_table()
+#     Job.objects.create_table()

@@ -40,7 +40,14 @@ class IntegerField(BaseField):
         return BASE_SQL.format(nullable=nullable)
 
 class FloatField(BaseField):
-    pass
+    def __init__(self, nullalbe=False):
+        self.nullable = nullalbe
+    
+    @property
+    def get_sql_text(self):
+        BASE_SQL = "double precision{nullable}"
+        nullable = "" if self.nullable else " NOT NULL"
+        return BASE_SQL.format(nullable=nullable)
 
 class CharField(BaseField):
 
@@ -57,15 +64,34 @@ class CharField(BaseField):
 
 class DateTimeField(BaseField):
 
+    def __init__(self, nullalbe=False):
+        self.nullable = nullalbe
+    
     @property
     def get_sql_text(self):
-        return f"varchar({self.max_length}))"
+        BASE_SQL = "timestamp with time zone{nullable}"
+        nullable = "" if self.nullable else " NOT NULL"
+        return BASE_SQL.format(nullable=nullable)
 
 class BooleanField(BaseField):
-    pass
+    def __init__(self, nullalbe=False):
+        self.nullable = nullalbe
+    
+    @property
+    def get_sql_text(self):
+        BASE_SQL = "boolean{nullable}"
+        nullable = "" if self.nullable else " NOT NULL"
+        return BASE_SQL.format(nullable=nullable)
 
 class ForeignKey(BaseField):
     pass
 
 class TextField(BaseField):
-    pass
+    def __init__(self, nullalbe=False):
+        self.nullable = nullalbe
+    
+    @property
+    def get_sql_text(self):
+        BASE_SQL = "text{nullable}"
+        nullable = "" if self.nullable else " NOT NULL"
+        return BASE_SQL.format(nullable=nullable)
