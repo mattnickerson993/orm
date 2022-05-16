@@ -30,8 +30,8 @@ class BaseField():
     fk = False
 
 class IntegerField(BaseField):
-    def __init__(self, nullalbe=False):
-        self.nullable = nullalbe
+    def __init__(self, nullable=False):
+        self.nullable = nullable
     
     @property
     def get_sql_text(self):
@@ -40,8 +40,8 @@ class IntegerField(BaseField):
         return BASE_SQL.format(nullable=nullable)
 
 class FloatField(BaseField):
-    def __init__(self, nullalbe=False):
-        self.nullable = nullalbe
+    def __init__(self, nullable=False):
+        self.nullable = nullable
     
     @property
     def get_sql_text(self):
@@ -51,9 +51,9 @@ class FloatField(BaseField):
 
 class CharField(BaseField):
 
-    def __init__(self, max_length=255, nullalbe=False):
+    def __init__(self, max_length=255, nullable=False):
         self.max_length = max_length
-        self.nullable = nullalbe
+        self.nullable = nullable
     
     @property
     def get_sql_text(self):
@@ -64,8 +64,8 @@ class CharField(BaseField):
 
 class DateTimeField(BaseField):
 
-    def __init__(self, nullalbe=False):
-        self.nullable = nullalbe
+    def __init__(self, nullable=False):
+        self.nullable = nullable
     
     @property
     def get_sql_text(self):
@@ -74,8 +74,9 @@ class DateTimeField(BaseField):
         return BASE_SQL.format(nullable=nullable)
 
 class BooleanField(BaseField):
-    def __init__(self, nullalbe=False):
-        self.nullable = nullalbe
+    def __init__(self, nullable=False, default=None):
+        self.nullable = nullable
+        self.default = default
     
     @property
     def get_sql_text(self):
@@ -83,12 +84,16 @@ class BooleanField(BaseField):
         nullable = "" if self.nullable else " NOT NULL"
         return BASE_SQL.format(nullable=nullable)
 
+    @property
+    def get_default_value(self):
+        return self.default
+
 class ForeignKey(BaseField):
     pass
 
 class TextField(BaseField):
-    def __init__(self, nullalbe=False):
-        self.nullable = nullalbe
+    def __init__(self, nullable=False):
+        self.nullable = nullable
     
     @property
     def get_sql_text(self):

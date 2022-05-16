@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from models import Job, Message
 
 
@@ -51,5 +52,13 @@ if __name__ == "__main__":
 
     ##############create table ################
     # Job.objects.create_table()
-#     Message.objects.create_table()
+    Message.objects.create_table()
+    Message.objects.create(
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 7,
+        tries = 5.5,
+        is_active = True,
+        date_created = datetime.now(timezone.utc)
+    )
 #     Job.objects.create_table()
