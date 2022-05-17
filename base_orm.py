@@ -181,23 +181,12 @@ class Model(metaclass=MetaModel):
         values = []
         placeholders = []
         for name, column_type in inspect.getmembers(cls):
-            print(name, column_type)
             if isinstance(column_type, BaseField):
                 cols.append(name)
-                values.append(kwargs.get(name, column_type.get_default_value()))
+                # append instances default value if name not present
+                values.append(kwargs.get(name, getattr(column_type, 'default')))
                 placeholders.append('%s')
 
-        # search values and include missing defaults
-        # fields = [i[0] for i in inspect.getmembers(cls)
-        #                if not i[0].startswith('_') and not inspect.isfunction(i[1])
-        #                if not inspect.ismethod(i[1]) and not isinstance(i[1], property)]
-        # for field in fields:
-        #     if field not in cols:
-        #         cols.append(field)
-        #         values.append()
-        # cols = OrderedDict(**kwargs)
-        # criteria = [name for name in cols.keys()]
-        # values = [val for  val in cols.values()]
         cols = ", ".join(cols)
         placeholders = ", ".join(placeholders)
         sql = INSERT_SQL.format(table_name=table_name, column_names=cols, placeholders=placeholders)

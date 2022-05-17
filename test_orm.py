@@ -193,7 +193,8 @@ def test_delete(test_client_db, cleanup):
         job = Job.objects.get(id=1)
     return
 
-def test_not_nullable():
+def test_not_nullable(test_client_db, cleanup):
+    _, Message = test_client_db
     with pytest.raises(NotNullViolation):
         Message.objects.create(
         body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
@@ -203,3 +204,28 @@ def test_not_nullable():
         is_active = True,
         date_created = datetime.now()
     )
+
+def test_default_values(test_client_db, cleanup):
+    Job, Message = test_client_db
+    Job.objects.create(
+        data='test data',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 53,
+        tries = 9.11,
+        is_active = True,
+    )
+    Message.objects.create(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 7,
+        tries = 5.5,
+        date_created = datetime.now()
+    )
+    msg = Message.objects.get(id=1)
+    job = Job.objects.get(id = 1)
+    assert msg.id == 1
+    # assert job.id == 1
+    # assert job.date_created <= datetime.now()
+    # assert msg.is_active == True
