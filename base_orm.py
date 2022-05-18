@@ -1,6 +1,8 @@
 from collections import OrderedDict
+from email.policy import default
 import inspect
 from ipaddress import collapse_addresses
+from operator import ge
 
 import psycopg2
 
@@ -58,6 +60,7 @@ class BaseManager:
     def create(self, **kwargs):
         cursor = self._get_cursor()
         sql, fields, params = self.model._get_create_sql(**kwargs)
+        # print(sql, fields, params)
         cursor.execute(sql, params)
         res = cursor.fetchone()
         new_id = res[0]
@@ -148,6 +151,12 @@ class Model(metaclass=MetaModel):
         }
         for key, value in kwargs.items():
             self._state[key] = value
+
+        # set defaults
+        for name, column_type in inspect.getmembers(type(self)):
+            if isinstance(column_type, BaseField) and name not in self._state:
+                val = getattr(column_type, 'default')
+                self._state[name] = val
     
     def __getattribute__(self, key):
         _state = super().__getattribute__("_state")
@@ -235,6 +244,10 @@ class Model(metaclass=MetaModel):
             if isinstance(column_type, BaseField):
                 cols.append(name)
                 values.append(getattr(self, name))
+            #     if isinstance(getattr(self, name), BaseField):
+            #         values.append(getattr(column_type, 'default'))
+            #     else:
+            #         values.append(getattr(self, name))
                 placeholders.append('%s')
         cols = ", ".join(cols)
         placeholders = ", ".join(placeholders)

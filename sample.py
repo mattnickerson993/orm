@@ -51,8 +51,8 @@ if __name__ == "__main__":
     # msg.delete()
 
     ##############create table ################
-    # Job.objects.create_table()
-    # Message.objects.create_table()
+    Job.objects.create_table()
+    Message.objects.create_table()
     # Message.objects.create(
     #     content= 'test content',
     #     body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
@@ -72,4 +72,10 @@ if __name__ == "__main__":
     # )
     # job = Job.objects.get(id=1)
     # msg = Message.objects.get(id = 1)
-    
+    Message.objects.create(
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 7,
+        tries = 5.5,
+        date_created = datetime.now()
+    )

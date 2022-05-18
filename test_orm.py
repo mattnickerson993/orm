@@ -193,17 +193,17 @@ def test_delete(test_client_db, cleanup):
         job = Job.objects.get(id=1)
     return
 
-def test_not_nullable(test_client_db, cleanup):
-    _, Message = test_client_db
-    with pytest.raises(NotNullViolation):
-        Message.objects.create(
-        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
-             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
-        count = 7,
-        tries = 5.5,
-        is_active = True,
-        date_created = datetime.now()
-    )
+# def test_not_nullable(test_client_db, cleanup):
+#     _, Message = test_client_db
+#     with pytest.raises(NotNullViolation):
+#         Message.objects.create(
+#             body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+#                 Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+#             count = 7,
+#             tries = 5.5,
+#             is_active = True,
+#             date_created = datetime.now(timezone.utc)
+#         )
 
 def test_default_values(test_client_db, cleanup):
     Job, Message = test_client_db
@@ -226,6 +226,39 @@ def test_default_values(test_client_db, cleanup):
     msg = Message.objects.get(id=1)
     job = Job.objects.get(id = 1)
     assert msg.id == 1
-    # assert job.id == 1
-    # assert job.date_created <= datetime.now()
-    # assert msg.is_active == True
+    assert job.id == 1
+    assert job.date_created <= datetime.now(timezone.utc)
+    assert msg.is_active == True
+
+
+def test_save_with_default_value(test_client_db, cleanup):
+    Job, Message = test_client_db
+    job = Job(
+        data='test data',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 53,
+        tries = 9.11,
+        is_active = True,
+    )
+    job.save()
+    assert job.id == 1
+    assert job.date_created <= datetime.now(timezone.utc)
+    same_job = Job.objects.get(id=1)
+    same_job.is_active = False
+    same_job.save()
+    assert same_job.id == 1
+    assert same_job.is_active != True
+
+    msg = Message(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 7,
+        tries = 5.5,
+        date_created = datetime.now()
+    )
+    msg.save()
+    new_msg = Message.objects.get(id=1)
+    assert new_msg.id == msg.id
+    assert new_msg.is_active == msg.is_active
