@@ -92,8 +92,21 @@ class BooleanField(BaseField):
     def get_default_value(self):
         return self.default
 
+
+
 class ForeignKey(BaseField):
-    pass
+
+    def __init__(self, model, nullable=False, default=None, on_delete=None):
+        self.model = model
+        self.nullable = nullable
+        self.default = default
+        self.on_delete = on_delete
+
+    def get_fk_text(self, name):
+        BASE_SQL = "{name}_id BIGINT{nullable} REFERENCES {name}s_{name}(id) ON DELETE {on_delete}"
+        nullable = "" if self.nullable else " NOT NULL"
+        return BASE_SQL.format(name = name, nullable=nullable, on_delete=self.on_delete)
+
 
 class TextField(BaseField):
     def __init__(self, nullable=False, default=None):

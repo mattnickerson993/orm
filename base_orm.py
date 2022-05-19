@@ -1,14 +1,10 @@
 from collections import OrderedDict
-from email.policy import default
 import inspect
-from ipaddress import collapse_addresses
-from operator import ge
 
 import psycopg2
 
 from exceptions import ModelNotFound, MultipleObjectsReturned
-from fields import BaseField, Column
-
+from fields import BaseField, ForeignKey
 from settings import DB_SETTINGS
 
 
@@ -176,7 +172,10 @@ class Model(metaclass=MetaModel):
         columns = ['id SERIAL PRIMARY KEY']
         for name, field in inspect.getmembers(cls):
             if isinstance(field, BaseField):
-                columns.append(f'{name} {field.get_sql_text}')
+                if isinstance(field, ForeignKey):
+                    columns.append(f'{field.get_fk_text(name)}')
+                else:
+                    columns.append(f'{name} {field.get_sql_text}')
         final_sql = CREATE_TABLE_SQL.format(
             table_name=table_name, 
             columns=", ".join(columns))
