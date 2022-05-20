@@ -262,3 +262,51 @@ def test_save_with_default_value(test_client_db, cleanup):
     new_msg = Message.objects.get(id=1)
     assert new_msg.id == msg.id
     assert new_msg.is_active == msg.is_active
+
+def test_fk_create(test_client_db, cleanup):
+    _, Message, User = test_client_db
+    user = User.objects.create(
+        email='matt@email.com',
+        first_name='matt',
+        last_name='last',
+        is_active='true'
+    )
+    msg = Message.objects.create(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 7,
+        tries = 5.5,
+        date_created = datetime.now(),
+        user_id=user.id
+    )
+
+    assert user.email == 'matt@email.com'
+    assert user.id == 1
+    assert msg.content == 'test content'
+    assert msg.user_id == 1
+
+def test_fk_save(test_client_db, cleanup):
+    _, Message, User = test_client_db
+    user = User(
+        email='matt@email.com',
+        first_name='matt',
+        last_name='last',
+        is_active='true'
+    )
+    user.save()
+    msg = Message(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 7,
+        tries = 5.5,
+        date_created = datetime.now(),
+        user_id=user.id
+    )
+    msg.save()
+    assert user.email == 'matt@email.com'
+    assert user.id == 1
+    assert msg.content == 'test content'
+    assert msg.user_id == 1
+    # failed
