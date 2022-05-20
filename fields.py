@@ -107,6 +107,9 @@ class ForeignKey(BaseField):
         nullable = "" if self.nullable else " NOT NULL"
         return BASE_SQL.format(name = name, nullable=nullable, on_delete=self.on_delete)
 
+    @property
+    def get_default_value(self):
+        return self.default
 
 class TextField(BaseField):
     def __init__(self, nullable=False, default=None):

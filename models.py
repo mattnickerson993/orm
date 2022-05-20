@@ -27,7 +27,7 @@ class Message(Model):
     tries = fields.FloatField(nullable=True)
     is_active = fields.BooleanField(default=True)
     date_created = fields.DateTimeField(nullable=True)
-    user = fields.ForeignKey(User, on_delete='SET NULL')
+    user = fields.ForeignKey(User, nullable=True, on_delete='SET NULL')
 
 
     def __str__(self):

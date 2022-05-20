@@ -4,7 +4,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 from settings import DB_SETTINGS, TEST_DB_SETTINGS
 import inspect
 from base_orm import BaseManager, MetaModel
-from models import Job, Message
+from models import Job, Message, User
 from collections import OrderedDict
 
 
@@ -15,9 +15,11 @@ def test_client_db(create_test_db, models, test_db_connection):
     BaseManager.connection = test_db_connection
     # MetaModel.manager_class = BaseManager
     Job.objects.create_table()
+    User.objects.create_table()
     Message.objects.create_table()
     models.append(Job)
     models.append(Message)
+    models.append(User)
     yield models
     MetaModel.manager_class.connection.close()
     drop_test_db()

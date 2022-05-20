@@ -79,6 +79,7 @@ class BaseManager:
     def get(self, **kwargs):
         cursor = self._get_cursor()
         sql, fields, params = self.model._get_single_row_sql(**kwargs)
+        # print(sql)
         cursor.execute(sql, params)
         res = cursor.fetchall()
         num_rows = len(res)
@@ -90,6 +91,7 @@ class BaseManager:
         
         instance = self.model()
         for field, val in zip(fields, res[0]):
+            # print(field, val)
             setattr(instance, field, val)
         return instance
 
@@ -151,6 +153,9 @@ class Model(metaclass=MetaModel):
         # set defaults
         for name, column_type in inspect.getmembers(type(self)):
             if isinstance(column_type, BaseField) and name not in self._state:
+                if isinstance(column_type, ForeignKey):
+                    if '_id' not in name:
+                        name = f"{name}_id"
                 val = getattr(column_type, 'default')
                 self._state[name] = val
     
@@ -190,8 +195,13 @@ class Model(metaclass=MetaModel):
         placeholders = []
         for name, column_type in inspect.getmembers(cls):
             if isinstance(column_type, BaseField):
-                cols.append(name)
-                # append instances default value if name not present
+                if isinstance(column_type, ForeignKey):
+                    if '_id' not in name:
+                        name = f"{name}_id"
+                    cols.append(name)
+                else:
+                    cols.append(name)
+                    # append instances default value if name not present
                 values.append(kwargs.get(name, getattr(column_type, 'default')))
                 placeholders.append('%s')
 
@@ -241,12 +251,12 @@ class Model(metaclass=MetaModel):
         placeholders = []
         for name, column_type in inspect.getmembers(cls):
             if isinstance(column_type, BaseField):
-                cols.append(name)
-                values.append(getattr(self, name))
-            #     if isinstance(getattr(self, name), BaseField):
-            #         values.append(getattr(column_type, 'default'))
-            #     else:
-            #         values.append(getattr(self, name))
+                if isinstance(column_type, ForeignKey):
+                        cols.append(f'{name}_id')
+                        values.append(getattr(self, f"{name}_id"))
+                else:
+                    cols.append(name)
+                    values.append(getattr(self, name))
                 placeholders.append('%s')
         cols = ", ".join(cols)
         placeholders = ", ".join(placeholders)
@@ -273,10 +283,17 @@ class Model(metaclass=MetaModel):
         WHERE {criteria};
         """ 
         table_name = cls.__name__.lower()
+        fields = []
+        for name, column_type in inspect.getmembers(cls):
+            if isinstance(column_type, BaseField):
+                if isinstance(column_type, ForeignKey):
+                        fields.append(f'{name}_id')
+                else:
+                    fields.append(name)
         # get all cls attributes only
-        fields = [i[0] for i in inspect.getmembers(cls) 
-                       if not i[0].startswith('_') and not inspect.isfunction(i[1])
-                       if not inspect.ismethod(i[1]) and not isinstance(i[1], property)]
+        # fields = [i[0] for i in inspect.getmembers(cls) 
+        #                if not i[0].startswith('_') and not inspect.isfunction(i[1])
+        #                if not inspect.ismethod(i[1]) and not isinstance(i[1], property)]
                     
         if 'id' not in fields:
             fields.insert(0, 'id')

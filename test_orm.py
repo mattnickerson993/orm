@@ -13,7 +13,7 @@ from settings import DB_SETTINGS
 
 
 def test_create_models(test_client_db, cleanup):
-    Job, Message = test_client_db
+    Job, Message, *rest = test_client_db
     job = Job.objects.create(
         data='test data',
         body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
@@ -42,7 +42,7 @@ def test_create_models(test_client_db, cleanup):
     assert type(job.date_created) == datetime
 
 def test_get_models(test_client_db, cleanup):
-    Job, Message = test_client_db
+    Job, Message, *rest = test_client_db
     Job.objects.create(
         data='test data',
         body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
@@ -71,13 +71,13 @@ def test_get_models(test_client_db, cleanup):
     assert msg.tries < 6.0
 
 def test_model_not_found_exception(test_client_db, cleanup):
-    Job, _ = test_client_db
+    Job, *rest = test_client_db
     with pytest.raises(ModelNotFound):
         job = Job.objects.get(id=100)
 
 
 def test_multi_objs_exception(test_client_db, cleanup):
-    Job, _ = test_client_db
+    Job, *rest = test_client_db
     Job.objects.create(
         data='test data',
         body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
@@ -101,7 +101,7 @@ def test_multi_objs_exception(test_client_db, cleanup):
 
 
 def test_all(test_client_db, cleanup):
-    Job, _ = test_client_db
+    Job, *rest = test_client_db
     Job.objects.create(
         data='test data',
         body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
@@ -125,7 +125,7 @@ def test_all(test_client_db, cleanup):
 
 
 def test_where(test_client_db, cleanup):
-    Job, Message = test_client_db
+    Job, Message, *rest = test_client_db
     Job.objects.create(
         data='test data',
         body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
@@ -158,7 +158,7 @@ def test_where(test_client_db, cleanup):
     assert ids == [1, 2]
 
 def test_save(test_client_db, cleanup):
-    Job, Message = test_client_db
+    Job, Message, *rest = test_client_db
     job = Job(
         data='data to save',
         body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
@@ -175,7 +175,7 @@ def test_save(test_client_db, cleanup):
     assert type(job.count) == int
 
 def test_delete(test_client_db, cleanup):
-    Job, _ = test_client_db
+    Job, *rest = test_client_db
     job = Job(
         data='data to save',
         body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
@@ -206,7 +206,7 @@ def test_delete(test_client_db, cleanup):
 #         )
 
 def test_default_values(test_client_db, cleanup):
-    Job, Message = test_client_db
+    Job, Message, *rest = test_client_db
     Job.objects.create(
         data='test data',
         body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
@@ -232,7 +232,7 @@ def test_default_values(test_client_db, cleanup):
 
 
 def test_save_with_default_value(test_client_db, cleanup):
-    Job, Message = test_client_db
+    Job, Message, *rest = test_client_db
     job = Job(
         data='test data',
         body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
