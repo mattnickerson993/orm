@@ -487,4 +487,26 @@ def test_fk_delete(test_client_db, cleanup):
     msg.delete()
     with pytest.raises(ModelNotFound):
         my_msg = Message.objects.get(user_id=1)
+
+
+def test_chain(test_client_db, cleanup):
+    _, Message, User = test_client_db
+    user = User.objects.create(
+        email='matt@email.com',
+        first_name='matt',
+        last_name='last',
+        is_active='true'
+    )
+    msg = Message.objects.create(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 7,
+        tries = 5.5,
+        date_created = datetime.now(),
+        user_id=user.id
+    )
+    blah = msg.user
+    assert type(msg.user) == type(user)
+
     
