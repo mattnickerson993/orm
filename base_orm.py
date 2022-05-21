@@ -152,7 +152,7 @@ class Model(metaclass=MetaModel):
 
         # set defaults
         for name, column_type in inspect.getmembers(type(self)):
-            if isinstance(column_type, BaseField) and name not in self._state:
+            if isinstance(column_type, BaseField) and name not in self._state and f"{name}_id" not in self._state:
                 if isinstance(column_type, ForeignKey):
                     if '_id' not in name:
                         name = f"{name}_id"
@@ -224,10 +224,14 @@ class Model(metaclass=MetaModel):
         WHERE {criteria};
         """ 
         table_name = cls.__name__.lower()
-        # get all cls attributes only
-        fields = [i[0] for i in inspect.getmembers(cls)
-                       if not i[0].startswith('_') and not inspect.isfunction(i[1])
-                       if not inspect.ismethod(i[1]) and not isinstance(i[1], property)]
+        
+        fields = []
+        for name, column_type in inspect.getmembers(cls):
+            if isinstance(column_type, BaseField):
+                if isinstance(column_type, ForeignKey):
+                        fields.append(f'{name}_id')
+                else:
+                    fields.append(name)
         
         if 'id' not in fields:
             fields.insert(0, 'id')
@@ -270,6 +274,8 @@ class Model(metaclass=MetaModel):
         cols = ['id']
         for name, column_type in inspect.getmembers(cls):
             if isinstance(column_type, BaseField):
+                if isinstance(column_type, ForeignKey):
+                    name = f"{name}_id"
                 cols.append(name)
         
         sql = SELECT_ALL_SQL.format(columns=", ".join(cols), table_name=table_name)
@@ -290,10 +296,6 @@ class Model(metaclass=MetaModel):
                         fields.append(f'{name}_id')
                 else:
                     fields.append(name)
-        # get all cls attributes only
-        # fields = [i[0] for i in inspect.getmembers(cls) 
-        #                if not i[0].startswith('_') and not inspect.isfunction(i[1])
-        #                if not inspect.ismethod(i[1]) and not isinstance(i[1], property)]
                     
         if 'id' not in fields:
             fields.insert(0, 'id')
@@ -316,6 +318,8 @@ class Model(metaclass=MetaModel):
         values = []
         for name, column_type in inspect.getmembers(cls):
             if isinstance(column_type, BaseField):
+                if isinstance(column_type, ForeignKey):
+                    name = f"{name}_id"
                 cols.append(name)
                 values.append(getattr(self, name))
         

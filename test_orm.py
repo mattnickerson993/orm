@@ -309,4 +309,182 @@ def test_fk_save(test_client_db, cleanup):
     assert user.id == 1
     assert msg.content == 'test content'
     assert msg.user_id == 1
-    # failed
+
+
+def test_fk_where(test_client_db, cleanup):
+    _, Message, User = test_client_db
+    user = User(
+    email='matt1@email.com',
+    first_name='matt1',
+    last_name='last1',
+    is_active='true'
+    )
+    user.save()
+    msg = Message(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 7,
+        tries = 5.5,
+        date_created = datetime.now(),
+        user_id=user.id
+    )
+    msg.save()
+    user2 = User.objects.create(
+        email='matt2@email.com',
+        first_name='matt2',
+        last_name='last2',
+        is_active='true'
+    )
+    msg = Message.objects.create(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 6.5,
+        date_created = datetime.now(),
+        user_id=user2.id
+    )
+    msgs = Message.objects.where(content = 'test content')
+
+    for msg in msgs:
+        assert msg.user_id < 3
+    assert len(msgs) == 2
+
+
+def test_fk_all(test_client_db, cleanup):
+    _, Message, User = test_client_db
+    user = User(
+    email='matt1@email.com',
+    first_name='matt1',
+    last_name='last1',
+    is_active='true'
+    )
+    user.save()
+    msg = Message(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 7,
+        tries = 5.5,
+        date_created = datetime.now(),
+        user_id=user.id
+    )
+    msg.save()
+    user2 = User.objects.create(
+        email='matt2@email.com',
+        first_name='matt2',
+        last_name='last2',
+        is_active='true'
+    )
+    msg = Message.objects.create(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 6.5,
+        date_created = datetime.now(),
+        user_id=user2.id
+    )
+    msgs = Message.objects.all()
+
+    for msg in msgs:
+        assert msg.user_id < 3
+    assert len(msgs) == 2
+
+def test_fk_save_mult(test_client_db, cleanup):
+    _, Message, User = test_client_db
+    user = User(
+    email='matt1@email.com',
+    first_name='matt1',
+    last_name='last1',
+    is_active='true'
+    )
+    user.save()
+    msg = Message(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 7,
+        tries = 5.5,
+        date_created = datetime.now(),
+        user_id=user.id
+    )
+    msg.save()
+    assert msg.id == 1
+    assert msg.user_id == 1
+    user2 = User.objects.create(
+        email='matt2@email.com',
+        first_name='matt2',
+        last_name='last2',
+        is_active='true'
+    )
+    msg.user_id = user2.id
+    msg.save()
+
+    assert msg.id == 1
+    assert msg.user_id == 2
+
+
+
+def test_fk_get(test_client_db, cleanup):
+    _, Message, User = test_client_db
+    user = User.objects.create(
+        email='matt@email.com',
+        first_name='matt',
+        last_name='last',
+        is_active='true'
+    )
+    msg = Message.objects.create(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 7,
+        tries = 5.5,
+        date_created = datetime.now(),
+        user_id=user.id
+    )
+    user2 = User.objects.create(
+        email='matt2@email.com',
+        first_name='matt2',
+        last_name='last2',
+        is_active='true'
+    )
+    msg2 = Message.objects.create(
+        content='test content two',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 5.5,
+        date_created = datetime.now(),
+        user_id=user2.id
+    )
+    my_msg = Message.objects.get(id = 1)
+    assert my_msg.id == 1
+    my_second_msg = Message.objects.get(user_id=2)
+    assert my_second_msg.id == 2
+    assert my_second_msg.tries == 5.5
+    assert my_second_msg.user_id == 2
+
+def test_fk_delete(test_client_db, cleanup):
+    _, Message, User = test_client_db
+    user = User.objects.create(
+        email='matt@email.com',
+        first_name='matt',
+        last_name='last',
+        is_active='true'
+    )
+    msg = Message.objects.create(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 7,
+        tries = 5.5,
+        date_created = datetime.now(),
+        user_id=user.id
+    )
+    user.delete()
+    msg.delete()
+    with pytest.raises(ModelNotFound):
+        my_msg = Message.objects.get(user_id=1)
+    
