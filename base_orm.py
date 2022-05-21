@@ -5,6 +5,7 @@ import psycopg2
 
 from exceptions import ModelNotFound, MultipleObjectsReturned
 from fields import BaseField, ForeignKey
+from querysets import  ModelIterable, Queryset
 from settings import DB_SETTINGS
 
 
@@ -44,9 +45,9 @@ class BaseManager:
     def all(self):
         cursor = self._get_cursor()
         sql, cols = self.model._get_select_all_sql()
-        cursor.execute(sql)
+        # cursor.execute(sql)
         res = []
-        for row in cursor.fetchall():
+        for row in ModelIterable(cursor, sql):
             instance = self.model()
             for field, value in zip(cols, row):
                 setattr(instance, field, value)
