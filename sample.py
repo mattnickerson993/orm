@@ -14,18 +14,16 @@ if __name__ == "__main__":
 #         is_active='true'
 #     )
 
-#      msg = Message.objects.create(
-#         content='test content',
-#         body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
-#              Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
-#         count = 7,
-#         tries = 5.5,
-#         is_active = True,
-#         date_created = datetime.now()
-#      )
-     msgs = Message.objects.where(tries=5.5)
+     # msg = Message.objects.create(
+     #    content='my test content 2',
+     #    body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+     #         Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+     #    count = 7,
+     #    tries = 7.5,
+     #    is_active = True,
+     #    date_created = datetime.now()
+     # )
+     msgs = Message.objects.all().order_by('-id', 'tries')
      print(msgs)
      for msg in msgs:
-          print(msg)
           print(msg.id)
-          print(msg.content)
