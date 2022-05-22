@@ -45,14 +45,7 @@ class BaseManager:
     def all(self):
         cursor = self._get_cursor()
         sql, cols = self.model._get_select_all_sql()
-        # cursor.execute(sql)
-        res = []
-        for row in ModelIterable(cursor, sql):
-            instance = self.model()
-            for field, value in zip(cols, row):
-                setattr(instance, field, value)
-            res.append(instance)          
-        return res
+        return Queryset(self.model, cursor, sql, cols)
     
     def create(self, **kwargs):
         cursor = self._get_cursor()
@@ -80,7 +73,6 @@ class BaseManager:
     def get(self, **kwargs):
         cursor = self._get_cursor()
         sql, fields, params = self.model._get_single_row_sql(**kwargs)
-        # print(sql)
         cursor.execute(sql, params)
         res = cursor.fetchall()
         num_rows = len(res)
@@ -92,7 +84,6 @@ class BaseManager:
         
         instance = self.model()
         for field, val in zip(fields, res[0]):
-            # print(field, val)
             setattr(instance, field, val)
         return instance
 
@@ -116,14 +107,7 @@ class BaseManager:
     def where(self, **kwargs):
         cursor = self._get_cursor()
         sql, cols, params = self.model._get_filter_sql(**kwargs)
-        cursor.execute(sql, params)
-        res = []
-        for row in cursor.fetchall():
-            instance = self.model()
-            for field, value in zip(cols, row):
-                setattr(instance, field, value)
-            res.append(instance)          
-        return res
+        return Queryset(self.model, cursor, sql, cols, params=params)
 
 
 class MetaModel(type):

@@ -6,6 +6,7 @@ import pytest
 from exceptions import ModelNotFound, MultipleObjectsReturned
 from fields import IntegerField
 from models import Job, Message
+from querysets import Queryset
 
 from settings import DB_SETTINGS
 
@@ -489,7 +490,7 @@ def test_fk_delete(test_client_db, cleanup):
         my_msg = Message.objects.get(user_id=1)
 
 
-def test_chain(test_client_db, cleanup):
+def test_queryset_all(test_client_db, cleanup):
     _, Message, User = test_client_db
     user = User.objects.create(
         email='matt@email.com',
@@ -506,7 +507,49 @@ def test_chain(test_client_db, cleanup):
         date_created = datetime.now(),
         user_id=user.id
     )
-    blah = msg.user
-    assert type(msg.user) == type(user)
+    msgs = Message.objects.all()
+    assert type(msgs) == Queryset
+
+def test_queryset_all(test_client_db, cleanup):
+    _, Message, *rest = test_client_db
+    msg_one = Message.objects.create(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 7,
+        tries = 5.5,
+        date_created = datetime.now(),
+    )
+    msg_two = Message.objects.create(
+        content='test content 2',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 5.5,
+        date_created = datetime.now(),
+    )
+    msgs = Message.objects.where(tries = 5.5)
+    assert type(msgs) == Queryset
+    assert len(msgs) == 2
+    assert type(msgs[-1]) == Message
+# def test_chain(test_client_db, cleanup):
+#     _, Message, User = test_client_db
+#     user = User.objects.create(
+#         email='matt@email.com',
+#         first_name='matt',
+#         last_name='last',
+#         is_active='true'
+#     )
+#     msg = Message.objects.create(
+#         content='test content',
+#         body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+#              Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+#         count = 7,
+#         tries = 5.5,
+#         date_created = datetime.now(),
+#         user_id=user.id
+#     )
+#     blah = msg.user
+#     assert type(msg.user) == type(user)
 
     

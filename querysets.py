@@ -10,6 +10,10 @@ class Queryset():
         self.fields = fields
         self.params = params
         self._iterable_class = ModelIterable
+    
+    def __getitem__(self, key):
+        self._fetch_all()
+        return self._result_cache[key]
 
     def _fetch_all(self):
         if self._result_cache is None:
@@ -18,6 +22,19 @@ class Queryset():
     def __iter__(self):
         self._fetch_all()
         return iter(self._result_cache)
+    
+    def __len__(self):
+        self._fetch_all()
+        return len(self._result_cache)
+    
+    def order_by(self, *fields):
+        return
+        
+    def __repr__(self):
+        data = list(self[:5])
+        if len(data) > 5:
+            data[-1] = "...(remaining elements truncated)..."
+        return "<%s %r>" % (self.__class__.__name__, data)
 
 
 
@@ -28,8 +45,9 @@ class ModelIterable():
         
 
     def __iter__(self):
-        self.queryset.cursor.execute(self.sql)
+        self.queryset.cursor.execute(self.queryset.sql, self.queryset.params)
         for row in self.queryset.cursor.fetchall():
-            yield row
-        # fetch results here
-        # ie yield obj
+            instance = self.queryset.model()
+            for field, value in zip(self.queryset.fields, row):
+                setattr(instance, field, value)
+            yield instance
