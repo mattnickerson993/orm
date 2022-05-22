@@ -532,24 +532,74 @@ def test_queryset_all(test_client_db, cleanup):
     assert type(msgs) == Queryset
     assert len(msgs) == 2
     assert type(msgs[-1]) == Message
-# def test_chain(test_client_db, cleanup):
-#     _, Message, User = test_client_db
-#     user = User.objects.create(
-#         email='matt@email.com',
-#         first_name='matt',
-#         last_name='last',
-#         is_active='true'
-#     )
-#     msg = Message.objects.create(
-#         content='test content',
-#         body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
-#              Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
-#         count = 7,
-#         tries = 5.5,
-#         date_created = datetime.now(),
-#         user_id=user.id
-#     )
-#     blah = msg.user
-#     assert type(msg.user) == type(user)
+
+def test_order_by(test_client_db, cleanup):
+    _, Message, *rest = test_client_db
+    
+    msg_one = Message.objects.create(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 5.5,
+        date_created = datetime.now(),
+    )
+    msg_two = Message.objects.create(
+        content='more test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 6.5,
+        date_created = datetime.now(),
+    )
+    msgs = Message.objects.all().order_by('-id')
+    assert msgs[0].id == 2
+    assert msgs[1].id == 1
+
+    msgs = Message.objects.all().order_by('id')
+    assert msgs[0].id == 1
+    assert msgs[1].id == 2
+
+    msgs = Message.objects.where(count=77).order_by('tries', '-id')
+    assert msgs[0].tries == 5.5
+    assert msgs[1].tries == 6.5
+
+    msgs = Message.objects.where(count=77).order_by('-tries', '-id')
+    assert msgs[0].tries == 6.5
+    assert msgs[1].tries == 5.5
+
+
+def test_count(test_client_db, cleanup):
+    _, Message, *rest = test_client_db
+    
+    msg_one = Message.objects.create(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 5.5,
+        date_created = datetime.now(),
+    )
+    msg_two = Message.objects.create(
+        content='more test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 6.5,
+        date_created = datetime.now(),
+    )
+
+    msgs = Message.objects.all().count()
+    assert msgs == 2
+    msgs = Message.objects.where(count=77).count()
+    assert msgs == 2
+    msgs = Message.objects.where(id=2, tries=6.5).count()
+    assert msgs == 1
+    msgs = Message.objects.where(id=3).count()
+    assert msgs == 0
+    msgs = Message.objects.where(id=2).order_by('-id').count()
+    assert msgs == 1
+    
+
 
     

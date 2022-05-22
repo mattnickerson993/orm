@@ -28,6 +28,10 @@ class Queryset():
         obj.params = self.params.copy() if self.params is not None else None
         return obj
     
+    def count(self):
+        self._fetch_all()
+        return len(self._result_cache)
+
     def __getitem__(self, key):
         self._fetch_all()
         return self._result_cache[key]
