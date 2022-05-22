@@ -30,6 +30,9 @@ class Message(Model):
     user = fields.ForeignKey(User, nullable=True, on_delete='SET NULL')
 
 
+    def __repr__(self):
+        return f"{self.content}"
+        
     def __str__(self):
         return f"{self.content}"
 

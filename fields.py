@@ -110,6 +110,7 @@ class ForeignKey(BaseField):
     @property
     def get_default_value(self):
         return self.default
+    
 
 class TextField(BaseField):
     def __init__(self, nullable=False, default=None):
