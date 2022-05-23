@@ -601,5 +601,57 @@ def test_count(test_client_db, cleanup):
     assert msgs == 1
     
 
-
+def test_modelmanager_values(test_client_db, cleanup):
+    _, Message, *rest = test_client_db
     
+    msg_one = Message.objects.create(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 5.5,
+        date_created = datetime.now(),
+    )
+    msg_two = Message.objects.create(
+        content='more test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 6.5,
+        date_created = datetime.now(),
+    )
+
+    msgs = Message.objects.values('count', 'tries')
+    for msg in msgs:
+        assert type(msg) == dict
+        assert msg['count'] == 77
+        assert msg.get('id') == None
+
+def test_mm_values_orderby(test_client_db, cleanup):
+    _, Message, *rest = test_client_db
+    
+    msg_one = Message.objects.create(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 5.5,
+        date_created = datetime.now(),
+    )
+    msg_two = Message.objects.create(
+        content='more test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 6.5,
+        date_created = datetime.now(),
+    )
+
+    msgs = Message.objects.values('count', 'tries').order_by('id')
+    for msg in msgs:
+        assert type(msg) == dict
+        assert msg['count'] == 77
+        assert msg.get('id') == None
+    
+    assert msgs[0].get('tries') == 5.5
+    assert msgs[1].get('tries') == 6.5

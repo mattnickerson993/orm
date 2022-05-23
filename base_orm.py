@@ -5,7 +5,7 @@ import psycopg2
 
 from exceptions import ModelNotFound, MultipleObjectsReturned
 from fields import BaseField, ForeignKey
-from querysets import  ModelIterable, Queryset
+from querysets import  ModelIterable, Queryset, ValuesIterable
 from settings import DB_SETTINGS
 
 
@@ -45,7 +45,7 @@ class BaseManager:
     def all(self):
         cursor = self._get_cursor()
         sql, cols = self.model._get_select_all_sql()
-        return Queryset(self.model, cursor, sql, cols)
+        return Queryset(ModelIterable, self.model, cursor, sql, cols)
     
     def create(self, **kwargs):
         cursor = self._get_cursor()
@@ -96,18 +96,15 @@ class BaseManager:
         self._commit()
         return instance
     
-
-    def update(self, instance):
+    def values(self, *args):
         cursor = self._get_cursor()
-        sql, vals = instance._get_update_sql()
-        cursor.execute(sql, vals)
-        self._commit()
-        return instance
+        sql, cols = self.model._get_values_sql(*args)
+        return Queryset(ValuesIterable, self.model, cursor, sql, list(cols))
     
     def where(self, **kwargs):
         cursor = self._get_cursor()
         sql, cols, params = self.model._get_filter_sql(**kwargs)
-        return Queryset(self.model, cursor, sql, cols, params=params)
+        return Queryset(ModelIterable, self.model, cursor, sql, cols, params=params)
 
 
 class MetaModel(type):
@@ -265,6 +262,13 @@ class Model(metaclass=MetaModel):
         
         sql = SELECT_ALL_SQL.format(columns=", ".join(cols), table_name=table_name)
         return sql, cols
+
+    @classmethod
+    def _get_values_sql(cls, *args):
+        SQL = "SELECT {columns} FROM {table_name}s_{table_name};"
+        table_name = cls.__name__.lower()
+        sql = SQL.format(columns=", ".join(args), table_name=table_name)
+        return sql, args
 
 
     @classmethod

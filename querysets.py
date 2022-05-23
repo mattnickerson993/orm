@@ -3,14 +3,14 @@ class EmptyObj():
 
 class Queryset():
     
-    def __init__(self, model, cursor, sql, fields, params=None):
+    def __init__(self, iterable_class, model, cursor, sql, fields, params=None):
         self._result_cache = None
+        self._iterable_class = iterable_class
         self.model = model
         self.cursor = cursor
         self.sql = sql
         self.fields = fields
         self.params = params
-        self._iterable_class = ModelIterable
     
     def _chain(self):
         """
@@ -53,7 +53,6 @@ class Queryset():
         """Return a new QuerySet instance with the ordering changed."""
         obj = self._chain()
         obj.sql = self.order_fields(obj.sql, *fields)
-        print(obj.sql)
         return obj
     
     def order_fields(self, sql, *fields):
@@ -83,3 +82,27 @@ class ModelIterable():
             for field, value in zip(self.queryset.fields, row):
                 setattr(instance, field, value)
             yield instance
+
+
+class ValuesIterable():
+    def __init__(self, queryset):
+        self.queryset = queryset
+    
+    def __iter__(self):
+        self.queryset.cursor.execute(self.queryset.sql, self.queryset.params)
+        fields = self.queryset.fields
+        indexes = range(len(fields))
+        for row in self.queryset.cursor.fetchall():
+            yield {fields[i]: row[i] for i in indexes}
+
+class ValuesListIterable():
+    def __init__(self, queryset, flat=False):
+        self.queryset = queryset
+        self.flat = flat
+    
+    def __iter__(self):
+        self.queryset.cursor.execute(self.queryset.sql, self.queryset.params)
+        fields = self.queryset.fields
+        indexes = range(len(fields))
+        for row in self.queryset.cursor.fetchall():
+            yield {fields[i]: row[i] for i in indexes}
