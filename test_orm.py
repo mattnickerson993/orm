@@ -770,6 +770,13 @@ def test_values_chain(test_client_db, cleanup):
         assert msg.get('count') == 77
         assert msg.get('tries') == 6.5
     
+    msgs = Message.objects.values('id', 'count', 'tries').where(is_active=True)
+    for msg in msgs:
+        assert type(msg) == dict
+        assert msg.get('id') == 2
+        assert msg.get('count') == 77
+        assert msg.get('tries') == 6.5
+    
     msgs = Message.objects.where(count=77).values('id', 'content').order_by('-id')
     for msg in msgs:
         assert type(msg) == dict
@@ -777,6 +784,12 @@ def test_values_chain(test_client_db, cleanup):
     assert msgs[0].get('id') == 2
     assert msgs[1].get('id') == 1
 
+    msgs = Message.objects.values('id', 'content').where(count=77).order_by('-id')
+    for msg in msgs:
+        assert type(msg) == dict
+        assert msg.get('id') in [1, 2]
+    assert msgs[0].get('id') == 2
+    assert msgs[1].get('id') == 1
 
 def test_values_list_chain(test_client_db, cleanup):
     _, Message, *rest = test_client_db
@@ -806,6 +819,14 @@ def test_values_list_chain(test_client_db, cleanup):
         assert msg[0] == 2
         assert msg[1] == 77
         assert msg[2] == 6.5
+
+    msgs = Message.objects.values_list('id', 'count', 'tries').where(is_active=True)
+    for msg in msgs:
+        assert type(msg) == tuple
+        assert msg[0] == 2
+        assert msg[1] == 77
+        assert msg[2] == 6.5
+    
     
     msgs = Message.objects.where(count=77).values_list('id', 'content').order_by('-id')
     for msg in msgs:
@@ -814,5 +835,15 @@ def test_values_list_chain(test_client_db, cleanup):
     assert msgs[0][0] == 2
     assert msgs[1][0] == 1
 
+    msgs = Message.objects.values_list('id', 'content').where(count=77).order_by('-id')
+    for msg in msgs:
+        assert type(msg) == tuple
+        assert msg[0] in [1, 2]
+    assert msgs[0][0] == 2
+    assert msgs[1][0] == 1
+
     msgs = Message.objects.where(count=77).values_list('id', flat=True).order_by('-id')
+    assert [msg for msg in msgs ] == [2, 1]
+
+    msgs = Message.objects.values_list('id', flat=True).where(count=77).order_by('-id')
     assert [msg for msg in msgs ] == [2, 1]

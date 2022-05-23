@@ -52,11 +52,10 @@ class Queryset():
         self._fetch_all()
         return len(self._result_cache)
     
-    # def where(self, **kwargs):
-    #     obj = self._chain()
-    #     obj._iterable_class = ModelIterable
-    #     obj.sql, obj.params = self._filter_fields(obj.sql, **kwargs)
-    #     return obj
+    def where(self, **kwargs):
+        obj = self._chain()
+        obj.sql, obj.params = self._filter_fields(obj.sql, **kwargs)
+        return obj
 
     def values_list(self, *args, flat=False):
         obj = self._chain()

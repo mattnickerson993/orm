@@ -23,6 +23,6 @@ if __name__ == "__main__":
      #    is_active = True,
      #    date_created = datetime.now()
      # )
-     msgs = Message.objects.where(is_active=True).values_list('id', flat=True).order_by('-id')
+     msgs = Message.objects.values('id').where(is_active=True).order_by('-id')
      for msg in msgs:
           print(msg)
