@@ -105,7 +105,7 @@ class BaseManager:
     def values_list(self, *args, **kwargs):
         cursor = self._get_cursor()
         sql, cols = self.model._get_values_sql(*args)
-        iterable = FlatValuesListIterable if kwargs.get('flat') else ValuesIterable
+        iterable = FlatValuesListIterable if kwargs.get('flat') else ValuesListIterable
         return Queryset(iterable, self.model, cursor, sql, list(cols))
     
     def where(self, **kwargs):

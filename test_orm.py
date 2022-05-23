@@ -655,3 +655,87 @@ def test_mm_values_orderby(test_client_db, cleanup):
     
     assert msgs[0].get('tries') == 5.5
     assert msgs[1].get('tries') == 6.5
+
+
+def test_mm_values_list(test_client_db, cleanup):
+    _, Message, *rest = test_client_db
+    
+    msg_one = Message.objects.create(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 5.5,
+        date_created = datetime.now(),
+    )
+    msg_two = Message.objects.create(
+        content='more test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 6.5,
+        date_created = datetime.now(),
+    )
+
+    msgs = Message.objects.values_list('count', 'tries')
+    for msg in msgs:
+        assert type(msg) == tuple
+        assert msg[0] == 77
+    
+
+def test_mm_values_list_flat(test_client_db, cleanup):
+    _, Message, *rest = test_client_db
+    
+    msg_one = Message.objects.create(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 5.5,
+        date_created = datetime.now(),
+    )
+    msg_two = Message.objects.create(
+        content='more test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 6.5,
+        date_created = datetime.now(),
+    )
+
+    msgs = Message.objects.values_list('count', flat=True)
+    for msg in msgs:
+        assert type(msg) != tuple
+        assert msg == 77
+
+def test_mm_values_list_order_by(test_client_db, cleanup):
+    _, Message, *rest = test_client_db
+    
+    msg_one = Message.objects.create(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 5.5,
+        date_created = datetime.now(),
+    )
+    msg_two = Message.objects.create(
+        content='more test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count = 77,
+        tries = 6.5,
+        date_created = datetime.now(),
+    )
+
+    msgs = Message.objects.values_list('count', flat=True).order_by('id')
+    for msg in msgs:
+        assert type(msg) != tuple
+        assert msg == 77
+    
+    msgs = Message.objects.values_list('count', 'tries').order_by('-id')
+    for msg in msgs:
+        assert type(msg) == tuple
+        assert msg[0] == 77
+    assert msgs[0][1] == 6.5
+    assert msgs[1][1] == 5.5
