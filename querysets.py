@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 class EmptyObj():
     pass
 
@@ -24,6 +26,7 @@ class Queryset():
         obj = EmptyObj()
         obj.__class__ = self.__class__
         obj.__dict__ = self.__dict__.copy()
+        obj.model = self.model
         obj.sql = str(self.sql)
         obj.fields = self.fields.copy()
         obj.params = self.params.copy() if self.params is not None else None
@@ -49,13 +52,54 @@ class Queryset():
         self._fetch_all()
         return len(self._result_cache)
     
+    # def where(self, **kwargs):
+    #     obj = self._chain()
+    #     obj._iterable_class = ModelIterable
+    #     obj.sql, obj.params = self._filter_fields(obj.sql, **kwargs)
+    #     return obj
+
+    def values_list(self, *args, flat=False):
+        obj = self._chain()
+        obj._iterable_class = ValuesListIterable if flat == False else FlatValuesListIterable
+        obj.sql,  obj.fields = self._format_values(obj.sql, *args)
+        return obj
+
     
+    def values(self, *args):
+        obj = self._chain()
+        obj._iterable_class = ValuesIterable
+        obj.sql,  obj.fields = self._format_values(obj.sql, *args)
+        return obj
+    
+    def _format_values(self, sql, *args):
+        _, old_sql = sql.split('FROM')
+        
+        SQL = "SELECT {columns} FROM {old_sql};"
+        FINAL_SQL = SQL.format(
+            columns = ", ".join(args),
+            old_sql = old_sql
+        )
+        return FINAL_SQL, list(args)
+
     def order_by(self, *fields):
         """Return a new QuerySet instance with the ordering changed."""
         obj = self._chain()
         obj.sql = self.order_fields(obj.sql, *fields)
         return obj
     
+    def _filter_fields(self, sql, **kwargs):
+        sql = sql.replace(';', '')
+        SQL = "{orig_sql} WHERE {conditions};"
+        cols = OrderedDict(**kwargs)
+        criteria = [name for name in cols.keys()]
+        values = [val for  val in cols.values()]
+        FINAL_SQL = SQL.format(
+            orig_sql=sql,
+            conditions=f"{'=%s AND '.join(criteria)}=%s"
+        )
+    
+        return FINAL_SQL, values
+
     def order_fields(self, sql, *fields):
         sql = sql.replace(';', '')
         SQL = "{orig_sql} ORDER BY {ordered_fields};"
