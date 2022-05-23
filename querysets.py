@@ -3,7 +3,7 @@ class EmptyObj():
 
 class Queryset():
     
-    def __init__(self, iterable_class, model, cursor, sql, fields, params=None):
+    def __init__(self, iterable_class, model, cursor, sql, fields, params=None, flat=None):
         self._result_cache = None
         self._iterable_class = iterable_class
         self.model = model
@@ -11,6 +11,7 @@ class Queryset():
         self.sql = sql
         self.fields = fields
         self.params = params
+        self.flat = flat
     
     def _chain(self):
         """
@@ -87,7 +88,7 @@ class ModelIterable():
 class ValuesIterable():
     def __init__(self, queryset):
         self.queryset = queryset
-    
+
     def __iter__(self):
         self.queryset.cursor.execute(self.queryset.sql, self.queryset.params)
         fields = self.queryset.fields
@@ -96,13 +97,24 @@ class ValuesIterable():
             yield {fields[i]: row[i] for i in indexes}
 
 class ValuesListIterable():
-    def __init__(self, queryset, flat=False):
+    def __init__(self, queryset):
         self.queryset = queryset
-        self.flat = flat
     
     def __iter__(self):
         self.queryset.cursor.execute(self.queryset.sql, self.queryset.params)
-        fields = self.queryset.fields
-        indexes = range(len(fields))
         for row in self.queryset.cursor.fetchall():
-            yield {fields[i]: row[i] for i in indexes}
+            yield row
+
+
+class FlatValuesListIterable():
+    """
+    Iterable returned by QuerySet.values_list(flat=True) that yields single
+    values.
+    """
+    def __init__(self, queryset):
+        self.queryset = queryset
+        
+    def __iter__(self):
+        self.queryset.cursor.execute(self.queryset.sql, self.queryset.params)
+        for row in self.queryset.cursor.fetchall():
+            yield row[0]

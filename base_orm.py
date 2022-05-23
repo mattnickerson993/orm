@@ -5,7 +5,7 @@ import psycopg2
 
 from exceptions import ModelNotFound, MultipleObjectsReturned
 from fields import BaseField, ForeignKey
-from querysets import  ModelIterable, Queryset, ValuesIterable
+from querysets import  FlatValuesListIterable, ModelIterable, Queryset, ValuesIterable, ValuesListIterable
 from settings import DB_SETTINGS
 
 
@@ -100,6 +100,13 @@ class BaseManager:
         cursor = self._get_cursor()
         sql, cols = self.model._get_values_sql(*args)
         return Queryset(ValuesIterable, self.model, cursor, sql, list(cols))
+    
+
+    def values_list(self, *args, **kwargs):
+        cursor = self._get_cursor()
+        sql, cols = self.model._get_values_sql(*args)
+        iterable = FlatValuesListIterable if kwargs.get('flat') else ValuesIterable
+        return Queryset(iterable, self.model, cursor, sql, list(cols))
     
     def where(self, **kwargs):
         cursor = self._get_cursor()

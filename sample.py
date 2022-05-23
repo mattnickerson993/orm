@@ -23,6 +23,6 @@ if __name__ == "__main__":
      #    is_active = True,
      #    date_created = datetime.now()
      # )
-     msgs = Message.objects.values('is_active', 'tries').order_by('-tries')
+     msgs = Message.objects.values_list('tries', flat=True)
      for msg in msgs:
           print(msg)
