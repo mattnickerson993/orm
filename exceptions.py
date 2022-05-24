@@ -6,3 +6,6 @@ class ModelNotFound(Exception):
 
 class MaxLengthRequired(Exception):
     pass
+
+class DeletionFailed(Exception):
+    pass
