@@ -8,12 +8,14 @@ from models import Job, Message, User
 from collections import OrderedDict
 
 
-# destroyed at end of test session -- creates test database and models and drops db at end of session
+
 @pytest.fixture(scope='session')
 def test_client_db(create_test_db, models, test_db_connection):
-    
+    """
+    creates test database and models and drops db at end of session
+    lasts entire pytest session prior to teardown
+    """
     BaseManager.connection = test_db_connection
-    # MetaModel.manager_class = BaseManager
     Job.objects.create_table()
     User.objects.create_table()
     Message.objects.create_table()
@@ -24,20 +26,6 @@ def test_client_db(create_test_db, models, test_db_connection):
     MetaModel.manager_class.connection.close()
     drop_test_db()
     return
-
-@pytest.fixture(scope='session')
-def models():
-    return []
-
-@pytest.fixture(scope='session')
-def test_db_connection():
-    connection = psycopg2.connect(
-        dbname=TEST_DB_SETTINGS.get('DB_NAME'),
-        user=TEST_DB_SETTINGS.get('DB_USER'),
-        password=TEST_DB_SETTINGS.get('DB_PASS'),
-        host=TEST_DB_SETTINGS.get('DB_HOST')
-    )
-    return connection
 
 @pytest.fixture(scope='session')
 def create_test_db():
@@ -52,6 +40,21 @@ def create_test_db():
     CREATE_DB_SQL = """CREATE DATABASE test_db;"""
     cursor.execute(CREATE_DB_SQL)
     connection.close()
+
+@pytest.fixture(scope='session')
+def models():
+    return []
+
+
+@pytest.fixture(scope='session')
+def test_db_connection():
+    connection = psycopg2.connect(
+        dbname=TEST_DB_SETTINGS.get('DB_NAME'),
+        user=TEST_DB_SETTINGS.get('DB_USER'),
+        password=TEST_DB_SETTINGS.get('DB_PASS'),
+        host=TEST_DB_SETTINGS.get('DB_HOST')
+    )
+    return connection
 
 def drop_test_db():
     connection = psycopg2.connect(
@@ -68,6 +71,10 @@ def drop_test_db():
 
 @pytest.fixture(scope='function')
 def cleanup(test_db_connection):
+    """
+    clears tables of all rows and resets all id sequences
+    runs after each pytest test
+    """
     
     cursor = test_db_connection.cursor()
     GET_TABLES_QUERY = """
