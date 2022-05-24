@@ -4,7 +4,10 @@ class EmptyObj():
     pass
 
 class Queryset():
-    
+    """
+    Returns a set of objects. Database not hit until iteration
+    """
+
     def __init__(self, iterable_class, model, cursor, sql, fields, params=None, flat=None):
         self._result_cache = None
         self._iterable_class = iterable_class
@@ -23,6 +26,9 @@ class Queryset():
         return obj
     
     def _clone(self):
+        """
+        Basic cloning of object
+        """
         obj = EmptyObj()
         obj.__class__ = self.__class__
         obj.__dict__ = self.__dict__.copy()
@@ -32,9 +38,6 @@ class Queryset():
         obj.params = self.params.copy() if self.params is not None else None
         return obj
     
-    def count(self):
-        self._fetch_all()
-        return len(self._result_cache)
 
     def __getitem__(self, key):
         self._fetch_all()
@@ -49,6 +52,13 @@ class Queryset():
         return iter(self._result_cache)
     
     def __len__(self):
+        self._fetch_all()
+        return len(self._result_cache)
+
+    # public methods
+    def count(self):
+        """ return count of objects that fit query """
+        
         self._fetch_all()
         return len(self._result_cache)
     
