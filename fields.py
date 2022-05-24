@@ -1,35 +1,14 @@
 from datetime import datetime
-import random
-from unittest.util import _MAX_LENGTH
 
 from exceptions import MaxLengthRequired
-
-class Column:
-    def __init__(self, column_type):
-        self.field_type = column_type
-    
-    @property
-    def sql_type(self):
-        SQL_TYPE_MAPPER = {
-            IntegerField: "integer",
-            FloatField: "double precision",
-            CharField: "varchar(%(max_length)s)",
-            BooleanField: "boolean",
-            DateTimeField: "timestamp with time zone",
-            TextField: "text"
-
-        }
-        print('self', self.field_type)
-        return SQL_TYPE_MAPPER[self.field_type]
     
 
 class BaseField():
-    nullable = False
-    blank = False
-    pk = False
-    fk = False
+    """ Base model that all DB fields inherit from"""
 
 class IntegerField(BaseField):
+    """ Integer field for database """
+
     def __init__(self, nullable=False, default=None):
         self.nullable = nullable
         self.default = default
@@ -41,6 +20,7 @@ class IntegerField(BaseField):
         return BASE_SQL.format(nullable=nullable)
 
 class FloatField(BaseField):
+    """ Float field for database """
     def __init__(self, nullable=False, default=None):
         self.nullable = nullable
         self.default = default
@@ -52,6 +32,7 @@ class FloatField(BaseField):
         return BASE_SQL.format(nullable=nullable)
 
 class CharField(BaseField):
+    """ String field for database """
 
     def __init__(self, max_length=255, nullable=False, default=None):
         self.max_length = max_length
@@ -66,7 +47,7 @@ class CharField(BaseField):
     
 
 class DateTimeField(BaseField):
-
+    """ Datetime field for database """
     def __init__(self, nullable=False, default=None):
         self.nullable = nullable
         self.default = default
@@ -78,6 +59,7 @@ class DateTimeField(BaseField):
         return BASE_SQL.format(nullable=nullable)
 
 class BooleanField(BaseField):
+    """ Boolean field for database """
     def __init__(self, nullable=False, default=None):
         self.nullable = nullable
         self.default = default
@@ -95,8 +77,9 @@ class BooleanField(BaseField):
 
 
 class ForeignKey(BaseField):
+    """ Foreign Key field for database """
 
-    def __init__(self, model, nullable=False, default=None, on_delete=None):
+    def __init__(self, model, nullable=False, default=None, on_delete='DO NOTHING'):
         self.model = model
         self.nullable = nullable
         self.default = default
@@ -113,6 +96,8 @@ class ForeignKey(BaseField):
     
 
 class TextField(BaseField):
+    """ Text field for database """
+
     def __init__(self, nullable=False, default=None):
         self.nullable = nullable
         self.default = default
