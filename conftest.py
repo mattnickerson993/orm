@@ -1,11 +1,10 @@
 import pytest
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-from settings import DB_SETTINGS, TEST_DB_SETTINGS
-import inspect
+
 from base_orm import BaseManager, MetaModel
 from models import Job, Message, User
-from collections import OrderedDict
+from settings import DB_SETTINGS, TEST_DB_SETTINGS
 
 
 
@@ -75,7 +74,7 @@ def cleanup(test_db_connection):
     clears tables of all rows and resets all id sequences
     runs after each pytest test
     """
-    
+
     cursor = test_db_connection.cursor()
     GET_TABLES_QUERY = """
     SELECT table_name FROM information_schema.tables

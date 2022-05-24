@@ -1,11 +1,10 @@
 from datetime import datetime, timezone
+
 from base_orm import Model
 import fields
 
 
 class User(Model):
-
-    _table_name = "user"
 
     email = fields.CharField(max_length=255)
     first_name = fields.CharField(max_length=255)
@@ -18,8 +17,6 @@ class User(Model):
 
 
 class Message(Model):
-
-    _table_name = 'message'
         
     content = fields.CharField(max_length=255)
     body = fields.TextField(nullable=True)
@@ -38,8 +35,6 @@ class Message(Model):
 
 
 class Job(Model):
-
-    _table_name = 'job'
         
     data = fields.CharField(max_length=255)
     body = fields.TextField(nullable=True)
