@@ -5,7 +5,7 @@ import psycopg2
 
 from exceptions import DeletionFailed, ModelNotFound, MultipleObjectsReturned
 from fields import BaseField, ForeignKey
-from querysets import  FlatValuesListIterable, ModelIterable, Queryset, ValuesIterable, ValuesListIterable
+from querysets import FlatValuesListIterable, ModelIterable, Queryset, ValuesIterable, ValuesListIterable
 from settings import DB_SETTINGS
 
 
@@ -23,7 +23,7 @@ class BaseManager:
         )
         cls.connection = connection
         return cls
-    
+
     @classmethod
     def _commit(cls):
         cls.connection.commit()
@@ -37,16 +37,14 @@ class BaseManager:
         cursor = cls._get_cursor()
         cursor.execute(query, params)
 
-
     def __init__(self, model):
         self.model = model
-    
 
     def all(self):
         cursor = self._get_cursor()
         sql, cols = self.model._get_select_all_sql()
         return Queryset(ModelIterable, self.model, cursor, sql, cols)
-    
+
     def create(self, **kwargs):
         cursor = self._get_cursor()
         sql, fields, params = self.model._get_create_sql(**kwargs)
@@ -55,13 +53,13 @@ class BaseManager:
         res = cursor.fetchone()
         new_id = res[0]
         self._commit()
-        
+
         return self.get(id=new_id)
-    
+
     def create_table(self):
         cursor = self._get_cursor()
         sql = self.model._create_table_sql()
-        res = cursor.execute(sql)
+        cursor.execute(sql)
         self._commit()
 
     def delete(self, instance):
@@ -81,7 +79,7 @@ class BaseManager:
             raise MultipleObjectsReturned(f"Call to model manager expected 1 object, call returned {num_rows}!")
         elif not num_rows:
             raise ModelNotFound('No objects returned from query')
-        
+
         instance = self.model()
         for field, val in zip(fields, res[0]):
             setattr(instance, field, val)
@@ -95,19 +93,18 @@ class BaseManager:
         instance._state['id'] = res[0]
         self._commit()
         return instance
-    
+
     def values(self, *args):
         cursor = self._get_cursor()
         sql, cols = self.model._get_values_sql(*args)
         return Queryset(ValuesIterable, self.model, cursor, sql, list(cols))
-    
 
     def values_list(self, *args, **kwargs):
         cursor = self._get_cursor()
         sql, cols = self.model._get_values_sql(*args)
         iterable = FlatValuesListIterable if kwargs.get('flat') else ValuesListIterable
         return Queryset(iterable, self.model, cursor, sql, list(cols))
-    
+
     def where(self, **kwargs):
         cursor = self._get_cursor()
         sql, cols, params = self.model._get_filter_sql(**kwargs)
@@ -121,11 +118,11 @@ class MetaModel(type):
 
     def _get_manager(cls):
         return cls.manager_class(model=cls)
-    
+
     @property
     def objects(cls):
         return cls._get_manager()
-    
+
     @property
     def _db(cls):
         return cls.manager_class.connection
@@ -149,14 +146,14 @@ class Model(metaclass=MetaModel):
                         name = f"{name}_id"
                 val = getattr(column_type, 'default')
                 self._state[name] = val
-    
+
     def __getattribute__(self, key):
         # prevent recursion
         _state = super().__getattribute__("_state")
         if key in _state:
             return _state[key]
         return super().__getattribute__(key)
-    
+
     def __setattr__(self, name, value):
         super().__setattr__(name, value)
         if name in self._state:
@@ -185,11 +182,11 @@ class Model(metaclass=MetaModel):
 
         final_sql = sql.format(
             table_name=table_name,
-            column_names=", ".join(cols), 
+            column_names=", ".join(cols),
             placeholders=", ".join(placeholders)
-            )
+        )
         return final_sql, cols, values
-    
+
     @classmethod
     def _create_table_sql(cls):
         sql = "CREATE TABLE IF NOT EXISTS {table_name}s_{table_name} ({columns});"
@@ -202,7 +199,7 @@ class Model(metaclass=MetaModel):
                 else:
                     columns.append(f'{name} {column_type.get_sql_text}')
         final_sql = sql.format(
-            table_name=table_name, 
+            table_name=table_name,
             columns=", ".join(columns))
         return final_sql
 
@@ -218,32 +215,31 @@ class Model(metaclass=MetaModel):
         sql = """
         SELECT {fields} FROM {table_name}s_{table_name}
         WHERE {criteria};
-        """ 
+        """
         table_name = cls.__name__.lower()
-        
+
         fields = []
         for name, column_type in inspect.getmembers(cls):
             if isinstance(column_type, BaseField):
                 if isinstance(column_type, ForeignKey):
-                        fields.append(f'{name}_id')
+                    fields.append(f'{name}_id')
                 else:
                     fields.append(name)
-        
+
         if 'id' not in fields:
             fields.insert(0, 'id')
 
         cols = OrderedDict(**kwargs)
         criteria = [name for name in cols.keys()]
-        values = [val for  val in cols.values()]
+        values = [val for val in cols.values()]
 
         final_sql = sql.format(
-            fields = ", ".join(fields),
+            fields=", ".join(fields),
             table_name=table_name,
             criteria=f"{'=%s AND '.join(criteria)}=%s"
         )
-    
-        return final_sql, fields, values
 
+        return final_sql, fields, values
 
     def _get_insert_sql(self):
         sql = "INSERT INTO {table_name}s_{table_name} ({column_names}) VALUES ({placeholders}) RETURNING id;"
@@ -254,20 +250,20 @@ class Model(metaclass=MetaModel):
         for name, column_type in inspect.getmembers(cls):
             if isinstance(column_type, BaseField):
                 if isinstance(column_type, ForeignKey):
-                        cols.append(f'{name}_id')
-                        values.append(getattr(self, f"{name}_id"))
+                    cols.append(f'{name}_id')
+                    values.append(getattr(self, f"{name}_id"))
                 else:
                     cols.append(name)
                     values.append(getattr(self, name))
                 placeholders.append('%s')
-        
+
         final_sql = sql.format(
             table_name=cls.__name__.lower(),
             column_names=", ".join(cols),
             placeholders=", ".join(placeholders)
-            )
+        )
         return final_sql, values
-    
+
     @classmethod
     def _get_select_all_sql(cls):
         sql = "SELECT {columns} FROM {table_name}s_{table_name};"
@@ -278,7 +274,7 @@ class Model(metaclass=MetaModel):
                 if isinstance(column_type, ForeignKey):
                     name = f"{name}_id"
                 cols.append(name)
-        
+
         final_sql = sql.format(columns=", ".join(cols), table_name=table_name)
         return final_sql, cols
 
@@ -287,27 +283,27 @@ class Model(metaclass=MetaModel):
         sql = """
         SELECT {fields} FROM {table_name}s_{table_name}
         WHERE {criteria};
-        """ 
+        """
         table_name = cls.__name__.lower()
         fields = []
         for name, column_type in inspect.getmembers(cls):
             if isinstance(column_type, BaseField):
                 if isinstance(column_type, ForeignKey):
-                        fields.append(f'{name}_id')
+                    fields.append(f'{name}_id')
                 else:
                     fields.append(name)
-                    
+
         if 'id' not in fields:
             fields.insert(0, 'id')
         cols = OrderedDict(**kwargs)
         criteria = [name for name in cols.keys()]
-        values = [val for  val in cols.values()]
+        values = [val for val in cols.values()]
         final_sql = sql.format(
-            fields = ", ".join(fields),
+            fields=", ".join(fields),
             table_name=table_name,
             criteria=f"{'=%s AND '.join(criteria)}=%s"
         )
-    
+
         return final_sql, fields, values
 
     @classmethod
@@ -316,7 +312,6 @@ class Model(metaclass=MetaModel):
         table_name = cls.__name__.lower()
         final_sql = sql.format(columns=", ".join(args), table_name=table_name)
         return final_sql, args
-    
 
     def _get_update_sql(self):
         sql = "UPDATE {table_name}s_{table_name} SET {fields} WHERE id = %s"
@@ -329,18 +324,18 @@ class Model(metaclass=MetaModel):
                     name = f"{name}_id"
                 cols.append(name)
                 values.append(getattr(self, name))
-        
+
         values.append(getattr(self, 'id'))
 
         final_sql = sql.format(
             table_name=cls.__name__.lower(),
             fields=", ".join([f"{col} = %s" for col in cols])
-            )
+        )
 
         return final_sql, values
-    
+
     # public methods
-    
+
     def delete(self):
         """Delete instance in db"""
         try:
@@ -352,7 +347,7 @@ class Model(metaclass=MetaModel):
             db.commit()
         except Exception as e:
             raise DeletionFailed(e)
-                
+
     def save(self):
         """update instance in db if it exists, otherwise create and update id in instance state"""
         cls = type(self)
@@ -368,5 +363,5 @@ class Model(metaclass=MetaModel):
             res = cursor.fetchone()
             self._state['id'] = res[0]
         db.commit()
-    
+
         return self

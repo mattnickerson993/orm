@@ -17,7 +17,7 @@ class User(Model):
 
 
 class Message(Model):
-        
+
     content = fields.CharField(max_length=255)
     body = fields.TextField(nullable=True)
     count = fields.IntegerField(nullable=True)
@@ -26,16 +26,15 @@ class Message(Model):
     date_created = fields.DateTimeField(nullable=True)
     user = fields.ForeignKey(User, nullable=True, on_delete='SET NULL')
 
-
     def __repr__(self):
         return f"{self.content}"
-        
+
     def __str__(self):
         return f"{self.content}"
 
 
 class Job(Model):
-        
+
     data = fields.CharField(max_length=255)
     body = fields.TextField(nullable=True)
     count = fields.IntegerField(nullable=True)

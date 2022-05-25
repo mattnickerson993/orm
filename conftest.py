@@ -7,7 +7,6 @@ from models import Job, Message, User
 from settings import DB_SETTINGS, TEST_DB_SETTINGS
 
 
-
 @pytest.fixture(scope='session')
 def test_client_db(create_test_db, models, test_db_connection):
     """
@@ -26,19 +25,21 @@ def test_client_db(create_test_db, models, test_db_connection):
     drop_test_db()
     return
 
+
 @pytest.fixture(scope='session')
 def create_test_db():
     connection = psycopg2.connect(
-            dbname=DB_SETTINGS.get('DB_NAME'),
-            user=DB_SETTINGS.get('DB_USER'),
-            password=DB_SETTINGS.get('DB_PASS'),
-            host=DB_SETTINGS.get('DB_HOST')
-        )
+        dbname=DB_SETTINGS.get('DB_NAME'),
+        user=DB_SETTINGS.get('DB_USER'),
+        password=DB_SETTINGS.get('DB_PASS'),
+        host=DB_SETTINGS.get('DB_HOST')
+    )
     connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cursor = connection.cursor()
     CREATE_DB_SQL = """CREATE DATABASE test_db;"""
     cursor.execute(CREATE_DB_SQL)
     connection.close()
+
 
 @pytest.fixture(scope='session')
 def models():
@@ -55,18 +56,20 @@ def test_db_connection():
     )
     return connection
 
+
 def drop_test_db():
     connection = psycopg2.connect(
-            dbname=DB_SETTINGS.get('DB_NAME'),
-            user=DB_SETTINGS.get('DB_USER'),
-            password=DB_SETTINGS.get('DB_PASS'),
-            host=DB_SETTINGS.get('DB_HOST')
-        )
+        dbname=DB_SETTINGS.get('DB_NAME'),
+        user=DB_SETTINGS.get('DB_USER'),
+        password=DB_SETTINGS.get('DB_PASS'),
+        host=DB_SETTINGS.get('DB_HOST')
+    )
     connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cursor = connection.cursor()
     DELETE_DB_SQL = """DROP DATABASE test_db;"""
     cursor.execute(DELETE_DB_SQL)
     return
+
 
 @pytest.fixture(scope='function')
 def cleanup(test_db_connection):
