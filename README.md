@@ -90,7 +90,7 @@ msg = Message.objects.create(
         date_created=datetime.now()
     )
 
-# another way to create row in table and save
+### another way to create row in table and save
 
     msg= Message(
         content='test content two',
@@ -103,6 +103,49 @@ msg = Message.objects.create(
     )
     msg.save()
 
+### to update the model/row
 
+ msg.count = 1
+ msg.contet = 'updated content'
+ msg.save()
+
+ ### to get a single row/model from db
+ msg = Message.objects.get(id=1, count=1)
+
+
+ ### to delete a database row
+ msg.delete()
+
+```
+
+#### Quersysets
+
+4 methods are available that return querysets
+
+1. all - returns a queryset with all db rows for model
+2. where - returns a queryset filtered by given kwargs
+3. values_list - returns a queryset of tuples with given args
+4. values - returns a queryset with dictionaries composed of given args
+
+```
+ #all
+
+ msgs = Message.objects.all()
+
+ #where(similar to django filter)
+
+ msgs = Message.objects.where(is_active=True, content='test content')
+
+ #values_list
+
+ msgs = Message.objects.values_list(id, is_active)
+
+ # values_list flat (returns individual values rather than tuples)
+
+ msgs = Message.objects.values_list(id, flat=True)
+
+ #values
+
+ msgs = Message.objects.values(id, is_active)
 
 ```
