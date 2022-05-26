@@ -2,7 +2,7 @@
 
 ## About the project
 
-As a python developer, I worked heavily with Django and Flask and have
+As a python developer, I've worked heavily with Django and Flask and have
 developed an interest in the object relational mappers that support them.
 I set out to build a small version of an orm that emulates many of the features
 django offers. My goals with undertaking this project included improving my understanding
@@ -15,16 +15,16 @@ Connect your postgres database via the Host, user, password and db name in the s
 For testing, you must connect via the same host , user and password but may set the test_db name
 to any name you please.
 
-### To run the tests
+## To run the tests
 
 ```
 pytest test_orm.py
 
 ```
 
-### Orm use
+## Orm use
 
-#### Creating Tables/models
+### Creating Tables/models
 
 1. Create a model (samples are found in the models.py file)
 
@@ -70,3 +70,39 @@ Message.objects.create_table()
 ```
 
 #### CRUD functionality
+
+Once the tables are created. Methods are available that look similar to
+the Django orm.
+
+```
+from datetime import datetime
+from models import Message
+
+### create row in table (Will autosave like django orm)
+
+msg = Message.objects.create(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count=7,
+        tries=5.5,
+        is_active=True,
+        date_created=datetime.now()
+    )
+
+# another way to create row in table and save
+
+    msg= Message(
+        content='test content two',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count=77,
+        tries=4.5,
+        is_active=False,
+        date_created=datetime.now()
+    )
+    msg.save()
+
+
+
+```
