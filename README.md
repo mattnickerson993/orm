@@ -138,14 +138,60 @@ msg = Message.objects.create(
 
  #values_list
 
- msgs = Message.objects.values_list(id, is_active)
+ msgs = Message.objects.values_list('id', 'is_active')
 
  # values_list flat (returns individual values rather than tuples)
 
- msgs = Message.objects.values_list(id, flat=True)
+ msgs = Message.objects.values_list('id', flat=True)
 
  #values
 
- msgs = Message.objects.values(id, is_active)
+ msgs = Message.objects.values('id', 'is_active')
 
 ```
+
+#### Quersyset chaining
+
+Querysets are designed to function like the django orm where
+the database is not hit until iteration. This allows chaining to take place.
+
+2 additional methods may be utilized
+
+- order_by -- returns and queryset ordered by stated args.
+- count -- returns an integer counting all values in queryset
+
+```
+# examples of chaining
+
+msgs = Message.objects.values_list('count', flat=True).order_by('id')
+
+msgs = Message.objects.where(is_active=True).values('id', 'count', 'tries')
+
+# -id means descending order
+msgs = Message.objects.values('id', 'content').where(count=77).order_by('-id')
+
+msgs = Message.objects.where(count=77).values_list('id', 'content').order_by('-id')
+
+msgs = Message.objects.all().count()
+
+msgs = Message.objects.where(id=2).order_by('-id').count()
+
+msgs = Message.objects.where(count=77).order_by('-tries', '-id')
+
+```
+
+#### Fields available
+
+#### Personal Growth
+
+I really enjoyed taking a deeper look into python, django and orms in this project.
+This project was built over roughly 1 month while working full time. I hope to build upon it
+in the future with the goal of replicating features of other orms to understand them better
+while also attempting to build unique features that may be of use.
+
+#### Resources utilized
+
+- [Django Docs](https://docs.djangoproject.com/en/4.0/topics/db/queries/)
+- [TestDriven.io](https://testdriven.io/courses/python-web-framework/)
+- [Hacksoft.io](https://www.hacksoft.io/blog/django-orm-under-the-hood-iterables)
+- [Yannick KIKI](https://levelup.gitconnected.com/how-i-built-a-simple-orm-from-scratch-in-python-18b50108cfa3)
