@@ -33,7 +33,7 @@ pytest test_orm.py
 
 models.py
 
-```
+```python
 class User(Model):
 
     email = fields.CharField(max_length=255)
@@ -64,7 +64,7 @@ class Message(Model):
 
 2. Import model and create database table
 
-```
+```python
 from models import Message, User
 
 User.objects.create_table()
@@ -77,7 +77,7 @@ Message.objects.create_table()
 Once the tables are created. Methods are available that look similar to
 the Django orm.
 
-```
+```python
 from datetime import datetime
 from models import Message
 
@@ -130,7 +130,7 @@ msg = Message.objects.create(
 3. values_list - returns a queryset of tuples with given args
 4. values - returns a queryset with dictionaries composed of given args
 
-```
+```python
  #all
 
  msgs = Message.objects.all()
@@ -165,7 +165,7 @@ the database is not hit until iteration. This allows chaining to take place.
 
 * prepending '-' to an order by argument will sort in descending order (ie '-id')
 
-```
+```python
 # examples of chaining
 
 msgs = Message.objects.values_list('count', flat=True).order_by('id')
@@ -201,14 +201,14 @@ The following fields are available and map accordingly to postgres fields (and i
 
 All fields accept nullable and default as kwargs
 
-```
+```python
 body = fields.TextField(nullable=True, default='my text here')
 
 ```
 
 Charfields accept an optional max_length kwarg
 
-```
+```python
 content = fields.CharField(max_length=255)
 
 ```
@@ -217,7 +217,7 @@ content = fields.CharField(max_length=255)
 
 In this version, foreign key may be created with the following syntax
 
-```
+```python
 class Message(Model):
 
     content = fields.CharField(max_length=255)
@@ -236,7 +236,7 @@ class Message(Model):
 
 Foreign keys can be accessed/utilized with the following syntax:
 
-```
+```python
 #user is foreign key to message
 # save object with foreign key
 
