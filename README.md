@@ -1,4 +1,4 @@
-# orm
+# orm version 0.1
 
 ## About the project
 
@@ -6,14 +6,17 @@ As a python developer, I've worked heavily with Django and Flask and have
 developed an interest in the object relational mappers that support them.
 I set out to build a small version of an orm that emulates many of the features
 django offers. My goals with undertaking this project included improving my understanding
-of both orms and object oriented programming in python. The project uses pyscog2 and pytest
+of both orms and object oriented programming in python.
+
+## Requirements
+
+The project uses pyscog2 and pytest
 and is only compatible with postgres at this time.
 
 ## To run the project
 
 Connect your postgres database via the Host, user, password and db name in the settings.py file.
-For testing, you must connect via the same host , user and password but may set the test_db name
-to any name you please.
+For testing (also in settings file), you must connect via the same host , user and password but may set the test_db name to any name you please.
 
 ## To run the tests
 
@@ -160,6 +163,8 @@ the database is not hit until iteration. This allows chaining to take place.
 - order_by -- returns and queryset ordered by stated args.
 - count -- returns an integer counting all values in queryset
 
+* prepending '-' to an order by argument will sort in descending order (ie '-id')
+
 ```
 # examples of chaining
 
@@ -182,10 +187,97 @@ msgs = Message.objects.where(count=77).order_by('-tries', '-id')
 
 #### Fields available
 
+The following fields are available and map accordingly to postgres fields (and id field is created as the primary key by default in this version)
+
+-Integerfield = integer
+-FloatField = double precision
+-Charfield = varchar
+-DateTimeField = timestamp with time zone
+-BooleanField = boolean
+-ForeignKey = foreign key
+-TextField = text
+
+**kwargs**
+
+All fields accept nullable and default as kwargs
+
+```
+body = fields.TextField(nullable=True, default='my text here')
+
+```
+
+Charfields accept an optional max_length kwarg
+
+```
+content = fields.CharField(max_length=255)
+
+```
+
+#### Foreign Keys
+
+In this version, foreign key may be created with the following syntax
+
+```
+class Message(Model):
+
+    content = fields.CharField(max_length=255)
+    body = fields.TextField(nullable=True)
+    user = fields.ForeignKey(User, nullable=True, on_delete='SET NULL')
+
+```
+
+- The first argument must be a valid model. Kwargs include nullable, default
+  and on_delete
+- on_delete options include
+  - CASCADE
+  - PROTECT
+  - SET NULL (default)
+  - DO NOTHING
+
+Foreign keys can be accessed/utilized with the following syntax:
+
+```
+#user is foreign key to message
+# save object with foreign key
+
+user = User(
+        email='matt@email.com',
+        first_name='matt',
+        last_name='last',
+        is_active='true'
+    )
+    user.save()
+    msg = Message(
+        content='test content',
+        body='Lorem ipsum dolor sit amet,Lorem ipsum dolor sit amet, consectetur adipiscing elit.\
+             Phasellus condimentum ex a risus aliquet venenatis.consectetur adipiscing elit.',
+        count=7,
+        tries=5.5,
+        date_created=datetime.now(),
+        user_id=user.id
+    )
+    msg.save()
+
+# get object with foreign key
+
+my_second_msg = Message.objects.get(user_id=2)
+
+# filter/where
+
+my_second_msg = Message.objects.where(user_id=2)
+
+# iteration/ foreign key access
+
+msgs = Message.objects.all()
+for msg in msgs:
+    print(msg.user_id)
+
+```
+
 #### Personal Growth
 
 I really enjoyed taking a deeper look into python, django and orms in this project.
-This project was built over roughly 1 month while working full time. I hope to build upon it
+This initial version was completed as a spare time side project in roughly 1 month. I hope to build upon it
 in the future with the goal of replicating features of other orms to understand them better
 while also attempting to build unique features that may be of use.
 
