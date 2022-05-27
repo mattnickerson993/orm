@@ -187,7 +187,7 @@ msgs = Message.objects.where(count=77).order_by('-tries', '-id')
 
 #### Fields available
 
-The following fields are available and map accordingly to postgres fields (and id field is created as the primary key by default in this version)
+The following fields are available and map accordingly to postgres fields (an id field is created as the primary key by default in this version)
 
 - Integerfield = integer
 - FloatField = double precision
